@@ -555,24 +555,7 @@ tbody tr:hover{background:var(--surface2)}
 }
 .auth-card h2{font-size:1.15rem;font-weight:700;text-align:center;margin-bottom:18px;color:var(--tx);letter-spacing:-.3px}
 
-.social-login { display: flex; flex-direction: column; gap: 8px; margin-bottom: 18px; }
-.btn-social {
-  width: 100%; display: flex; align-items: center; justify-content: center; gap: 10px;
-  background: var(--surface); border: 1px solid var(--border); color: var(--tx);
-  padding: 10px; font-size: .85rem; font-weight: 500; border-radius: 12px;
-  transition: all var(--ta); box-shadow: var(--s1);
-}
-.btn-social img, .btn-social svg { width: 18px; height: 18px; fill: currentColor; }
-.btn-social:hover { background: var(--border); border-color: var(--border2); transform: translateY(-2px); box-shadow: var(--s2); }
 
-.auth-divider {
-  display: flex; align-items: center; text-align: center; margin-bottom: 18px;
-  color: var(--tx3); font-size: .7rem; font-weight: 600; text-transform: uppercase; letter-spacing: 1px;
-}
-.auth-divider::before, .auth-divider::after {
-  content: ''; flex: 1; border-bottom: 1px solid var(--border);
-}
-.auth-divider span { padding: 0 14px; }
 
 .btn-auth{
   width:100%;justify-content:center;padding:11px;font-size:.95rem;margin-top:4px;border-radius:12px;

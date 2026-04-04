@@ -34,19 +34,34 @@ FS.initIcons = function() {
 FS.initIcons();
 
 // ── Compute backend base URL ──────────────────────────────────────────────
-// Works at: http://localhost/FlowStack/frontend/page.html
-// Produces: http://localhost/FlowStack/backend
+// Works on:
+//   localhost/FlowStack/frontend/page.html  → /FlowStack/backend
+//   yourdomain.epizy.com/frontend/page.html → /backend
+//   yourdomain.com/frontend/page.html       → /backend
 FS.BACKEND = (function () {
-    const parts  = window.location.pathname.split('/');  // ['','FlowStack','frontend','page.html']
+    const loc = window.location;
+    const parts = loc.pathname.split('/').filter(Boolean);
+
+    // Strategy 1: look for 'FlowStack' project folder in the path
     for (let i = 0; i < parts.length; i++) {
         if (parts[i].toLowerCase() === 'flowstack') {
-            const base = window.location.origin + parts.slice(0, i + 1).join('/');
+            const base = loc.origin + '/' + parts.slice(0, i + 1).join('/');
             return base + '/backend';
         }
     }
-    // Hard fallback
-    return window.location.origin + '/FlowStack/backend';
+
+    // Strategy 2: 'frontend' is detected — go up one level to project root
+    for (let i = 0; i < parts.length; i++) {
+        if (parts[i].toLowerCase() === 'frontend') {
+            const base = loc.origin + '/' + parts.slice(0, i).join('/');
+            return base + '/backend';
+        }
+    }
+
+    // Hard fallback: backend at root
+    return loc.origin + '/backend';
 })();
+
 
 // ── API fetch wrapper ─────────────────────────────────────────────────────
 FS.api = async function (endpoint, method, body) {
@@ -73,7 +88,7 @@ FS.api = async function (endpoint, method, body) {
         console.error('[FS.api] Network error:', err);
         return {
             ok: false, status: 0,
-            data: { error: 'Network error is XAMPP running and MySQL on?' }
+            data: { error: 'Network error. Could not reach the server. Please try again.' }
         };
     }
 };
@@ -101,13 +116,23 @@ FS.requireAuth = async function () {
 
 // ── URL helpers ───────────────────────────────────────────────────────────
 FS.loginUrl = function () {
-    const parts = window.location.pathname.split('/');
+    const loc = window.location;
+    const parts = loc.pathname.split('/').filter(Boolean);
+
+    // Strategy 1: project subfolder named 'FlowStack'
     for (let i = 0; i < parts.length; i++) {
         if (parts[i].toLowerCase() === 'flowstack') {
-            return window.location.origin + parts.slice(0, i + 1).join('/') + '/frontend/login.html';
+            return loc.origin + '/' + parts.slice(0, i + 1).join('/') + '/frontend/login.html';
         }
     }
-    return window.location.origin + '/FlowStack/frontend/login.html';
+    // Strategy 2: 'frontend' folder detected
+    for (let i = 0; i < parts.length; i++) {
+        if (parts[i].toLowerCase() === 'frontend') {
+            const base = loc.origin + '/' + parts.slice(0, i).join('/');
+            return base + '/frontend/login.html';
+        }
+    }
+    return loc.origin + '/frontend/login.html';
 };
 
 FS.logout = async function () {

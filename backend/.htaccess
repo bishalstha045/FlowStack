@@ -2,3 +2,14 @@
 # Prevents direct folder-listing of backend directories
 
 Options -Indexes
+
+# Block direct browser access to config files (only PHP scripts should include them)
+<Files "db.php">
+    Order Allow,Deny
+    Deny from all
+</Files>
+<Files "oauth.php">
+    Order Allow,Deny
+    Deny from all
+</Files>
+

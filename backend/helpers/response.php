@@ -8,33 +8,47 @@
 
 // Configure session cookie BEFORE starting (must be before session_start)
 if (session_status() === PHP_SESSION_NONE) {
+    $isHttps = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off')
+               || (int)($_SERVER['SERVER_PORT'] ?? 80) === 443;
     session_set_cookie_params([
         'lifetime' => 86400 * 7,  // 7 days
         'path'     => '/',        // share across /frontend and /backend
+        'secure'   => $isHttps,   // HTTPS-only on production
         'httponly' => true,
         'samesite' => 'Lax',
     ]);
     session_start();
 }
 
+
 // ── Standard JSON response headers ─────────────────────────────
 function setApiHeaders(): void
 {
     header('Content-Type: application/json; charset=utf-8');
     header('X-Content-Type-Options: nosniff');
+
     // Allow same-origin requests with credentials
+    // On InfinityFree, frontend and backend share the same domain so this is safe
     $origin = $_SERVER['HTTP_ORIGIN'] ?? '';
-    if ($origin) {
+    $host   = $_SERVER['HTTP_HOST'] ?? '';
+
+    // Only allow the request if origin matches our host (same domain)
+    if ($origin && (
+        strpos($origin, $host) !== false ||   // Same domain
+        strpos($origin, 'localhost') !== false // Local dev
+    )) {
         header("Access-Control-Allow-Origin: $origin");
         header('Access-Control-Allow-Credentials: true');
         header('Access-Control-Allow-Methods: GET, POST, OPTIONS');
         header('Access-Control-Allow-Headers: Content-Type, Accept');
     }
+
     // Handle pre-flight
     if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
-        http_response_code(200); exit;
+        http_response_code(204); exit;
     }
 }
+
 
 // ── JSON success ────────────────────────────────────────────────
 function jsonOk(array $data = [], int $code = 200): void

@@ -3,13 +3,13 @@
 
 Options -Indexes
 
-# Redirect root to index.html (which redirects to frontend/)
-DirectoryIndex index.html
+# Default entry point
+DirectoryIndex index.html index.php
 
-# Allow clean URLs (optional future use)
+# URL rewriting — works on both localhost subdirectory AND domain root
 <IfModule mod_rewrite.c>
     RewriteEngine On
-    RewriteBase /FlowStack/
+    # Do NOT hardcode RewriteBase — Apache resolves it automatically
 
     # If file exists, serve it directly
     RewriteCond %{REQUEST_FILENAME} -f [OR]
@@ -17,9 +17,16 @@ DirectoryIndex index.html
     RewriteRule ^ - [L]
 </IfModule>
 
+# Block direct access to PHP config files from browser
+<FilesMatch "^(db|oauth)\.php$">
+    Order Allow,Deny
+    Deny from all
+</FilesMatch>
+
 # Security headers
 <IfModule mod_headers.c>
     Header set X-Content-Type-Options "nosniff"
     Header set X-Frame-Options "SAMEORIGIN"
     Header set X-XSS-Protection "1; mode=block"
 </IfModule>
+
