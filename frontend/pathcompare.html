@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Path Compare Score two options and pick the better path on FlowStack.">
+    <title>Path Compare FlowStack</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="assets/css/app.css">
+</head>
+<body>
+<div id="fs-loading"><div class="fs-spinner"></div></div>
+<div class="fs-app" style="display:none" id="fs-app">
+    <div id="fs-overlay" class="sidebar-overlay"></div>
+    <aside id="fs-sidebar" class="sidebar"></aside>
+    <div class="fs-body">
+        <header id="fs-header" class="header"></header>
+        <main class="main-content">
+
+            <div class="page-header">
+                <div><h1>Path Compare</h1><p>Score two options side-by-side and decide with data</p></div>
+            </div>
+
+            <div class="card" style="margin-bottom:1.5rem">
+                <div class="section-title"><span>Compare Two Options</span></div>
+                <form id="compare-form" novalidate>
+                    <div class="compare-grid">
+                        <div class="form-group">
+                            <label for="option-a">Option A</label>
+                            <textarea id="option-a" class="form-control" rows="3" placeholder="e.g. Accept the offer at Company X stable salary, remote work, good benefits…" required></textarea>
+                        </div>
+                        <div class="form-group">
+                            <label for="option-b">Option B</label>
+                            <textarea id="option-b" class="form-control" rows="3" placeholder="e.g. Start my own freelance business freedom, uncertain income, passionate…" required></textarea>
+                        </div>
+                    </div>
+                    <button type="submit" class="btn btn-primary" id="btn-compare">⚖ Compare Paths</button>
+                </form>
+            </div>
+
+            <div id="result-section" style="display:none">
+                <div class="compare-result-grid">
+                    <div class="compare-col">
+                        <h3>Option A</h3>
+                        <div class="dim-row"><span class="dim-name">Positive signals</span><span class="dim-score" id="a-pos">—</span></div>
+                        <div class="dim-row"><span class="dim-name">Risk signals</span><span class="dim-score" id="a-neg" style="color:var(--color-danger)">—</span></div>
+                        <div class="dim-row"><span class="dim-name">Net score</span><span class="dim-score" id="a-net">—</span></div>
+                    </div>
+                    <div class="compare-col">
+                        <h3>Option B</h3>
+                        <div class="dim-row"><span class="dim-name">Positive signals</span><span class="dim-score" id="b-pos">—</span></div>
+                        <div class="dim-row"><span class="dim-name">Risk signals</span><span class="dim-score" id="b-neg" style="color:var(--color-danger)">—</span></div>
+                        <div class="dim-row"><span class="dim-name">Net score</span><span class="dim-score" id="b-net">—</span></div>
+                    </div>
+                </div>
+                <div class="winner-banner" id="winner-banner">
+                    <h3 id="winner-title">—</h3>
+                    <p id="winner-reason">—</p>
+                </div>
+            </div>
+
+            <div style="margin-top:2rem">
+                <div class="section-title"><span>Past Comparisons</span></div>
+                <div id="history-container"><p style="color:var(--color-text-muted);font-size:.875rem">Loading…</p></div>
+            </div>
+
+        </main>
+    </div>
+</div>
+
+<script src="assets/js/app.js"></script>
+<script>
+(async function () {
+    const user = await FS.requireAuth();
+    if (!user) return;
+    FS.initLayout(user, 'pathcompare');
+
+    async function loadHistory() {
+        const res = await FS.api('/api/pathcompare/index.php');
+        const cont = document.getElementById('history-container');
+        if (!res.ok || !res.data.history?.length) {
+            cont.innerHTML = '<p style="color:var(--color-text-muted);font-size:.875rem">No comparisons yet.</p>'; return;
+        }
+        cont.innerHTML = `<div class="table-wrap"><table>
+            <thead><tr><th>Option A</th><th>Option B</th><th>Winner</th><th>Date</th></tr></thead>
+            <tbody>${res.data.history.map(h => `<tr>
+                <td style="max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${FS.escape(h.option_a)}">${FS.escape(h.option_a.slice(0,60))}…</td>
+                <td style="max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${FS.escape(h.option_b)}">${FS.escape(h.option_b.slice(0,60))}…</td>
+                <td><span class="badge badge-purple">Option ${h.selected_option}</span></td>
+                <td>${FS.relDate(h.created_at)}</td>
+            </tr>`).join('')}</tbody>
+        </table></div>`;
+    }
+
+    document.getElementById('compare-form').addEventListener('submit', async function (e) {
+        e.preventDefault();
+        const option_a = document.getElementById('option-a').value.trim();
+        const option_b = document.getElementById('option-b').value.trim();
+        const btn = document.getElementById('btn-compare');
+        btn.disabled = true; btn.textContent = 'Analyzing…';
+
+        const res = await FS.api('/api/pathcompare/index.php', 'POST', { option_a, option_b });
+        if (res.ok) {
+            const d = res.data;
+            document.getElementById('a-pos').textContent = d.score_a.positive;
+            document.getElementById('a-neg').textContent = d.score_a.negative;
+            document.getElementById('a-net').textContent = d.score_a.net;
+            document.getElementById('b-pos').textContent = d.score_b.positive;
+            document.getElementById('b-neg').textContent = d.score_b.negative;
+            document.getElementById('b-net').textContent = d.score_b.net;
+            document.getElementById('winner-title').textContent = '🏆 Recommended: Option ' + d.selected;
+            document.getElementById('winner-reason').textContent = d.reasoning;
+            document.getElementById('result-section').style.display = 'block';
+            document.getElementById('result-section').scrollIntoView({ behavior: 'smooth' });
+            loadHistory();
+        } else FS.toast(res.data.error || 'Failed', 'danger');
+
+        btn.disabled = false; btn.textContent = '⚖ Compare Paths';
+    });
+
+    await loadHistory();
+    FS.showLoading(false);
+    document.getElementById('fs-app').style.display = 'flex';
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Skills Tracker — Log and rate your skills on FlowStack.">
+    <title>Skills — FlowStack</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="assets/css/app.css">
+</head>
+<body>
+<div id="fs-loading"><div class="fs-spinner"></div></div>
+<div class="fs-app" style="display:none" id="fs-app">
+    <div id="fs-overlay" class="sidebar-overlay"></div>
+    <aside id="fs-sidebar" class="sidebar"></aside>
+    <div class="fs-body">
+        <header id="fs-header" class="header"></header>
+        <main class="main-content">
+
+            <div class="page-header">
+                <div><h1>Skills</h1><p>Rate your proficiency and track growth</p></div>
+            </div>
+
+            <!-- Stats -->
+            <div class="stats-grid" style="grid-template-columns:repeat(3,1fr);margin-bottom:1.5rem">
+                <div class="stat-card"><div class="stat-label">Total Skills</div><div class="stat-value" id="s-count">—</div></div>
+                <div class="stat-card"><div class="stat-label">Avg Proficiency</div><div class="stat-value" id="s-avg">—<span style="font-size:1rem"> / 10</span></div></div>
+                <div class="stat-card"><div class="stat-label">Top Skill Level</div><div class="stat-value" id="s-top">—</div></div>
+            </div>
+
+            <!-- Add skill -->
+            <div class="card" style="margin-bottom:1.5rem">
+                <div class="section-title"><span>Add Skill</span></div>
+                <form id="add-form" novalidate>
+                    <div style="display:grid;grid-template-columns:1fr 180px auto;gap:.75rem;align-items:flex-end">
+                        <div class="form-group" style="margin-bottom:0">
+                            <label for="skill-name">Skill Name</label>
+                            <input type="text" id="skill-name" class="form-control" placeholder="e.g. JavaScript" maxlength="150" required>
+                        </div>
+                        <div class="form-group" style="margin-bottom:0">
+                            <label for="skill-level">Level: <span class="range-value" id="level-display">5</span>/10</label>
+                            <input type="range" id="skill-level" class="form-control" min="1" max="10" value="5"
+                                   oninput="document.getElementById('level-display').textContent=this.value">
+                        </div>
+                        <button type="submit" class="btn btn-primary" id="btn-add">+ Add</button>
+                    </div>
+                </form>
+            </div>
+
+            <!-- Skills list -->
+            <div class="section-title"><span>Your Skills</span><span id="skill-count" class="badge badge-purple"></span></div>
+            <div id="skills-container"><p style="color:var(--color-text-muted);font-size:.875rem">Loading…</p></div>
+
+        </main>
+    </div>
+</div>
+
+<script src="assets/js/app.js"></script>
+<script>
+(async function () {
+    const user = await FS.requireAuth();
+    if (!user) return;
+    FS.initLayout(user, 'skills');
+
+    async function loadSkills() {
+        const res = await FS.api('/api/skills/index.php');
+        if (!res.ok) return;
+        const d = res.data;
+
+        document.getElementById('s-count').textContent = d.count;
+        document.getElementById('s-avg').innerHTML     = d.avg + '<span style="font-size:1rem"> / 10</span>';
+        document.getElementById('skill-count').textContent = d.count + ' skill' + (d.count !== 1 ? 's' : '');
+
+        const topLevel = d.skills.length > 0 ? Math.max(...d.skills.map(s => s.proficiency_level)) : 0;
+        document.getElementById('s-top').innerHTML = topLevel + '<span style="font-size:1rem"> / 10</span>';
+
+        const cont = document.getElementById('skills-container');
+        if (!d.skills.length) {
+            cont.innerHTML = `<div class="empty-state"><h3>No skills yet</h3><p>Start rating your skills to get an overview.</p></div>`;
+        } else {
+            const colorMap = l => l >= 8 ? 'var(--color-teal)' : l >= 5 ? 'var(--color-primary)' : 'var(--color-amber)';
+            cont.innerHTML = `<div style="display:flex;flex-direction:column;gap:.65rem">${d.skills.map(s => `
+                <div style="display:flex;align-items:center;gap:1rem;background:var(--color-surface);border:1px solid var(--color-border);border-radius:var(--radius-lg);padding:.85rem 1.1rem">
+                    <div style="flex:1">
+                        <div style="font-weight:500;font-size:.9rem">${FS.escape(s.skill_name)}</div>
+                        <div style="margin-top:.4rem">
+                            <div class="progress-wrap"><div class="progress-bar" style="width:${s.proficiency_level*10}%;background:${colorMap(s.proficiency_level)}"></div></div>
+                        </div>
+                    </div>
+                    <div style="font-size:1.2rem;font-weight:700;color:${colorMap(s.proficiency_level)};min-width:40px;text-align:right">${s.proficiency_level}/10</div>
+                    <button class="btn btn-danger btn-sm" onclick="delSkill(${s.id})">✕</button>
+                </div>`).join('')}</div>`;
+        }
+    }
+
+    window.delSkill = async function (id) {
+        if (!confirm('Delete this skill?')) return;
+        const res = await FS.api('/api/skills/index.php?delete=1', 'POST', { skill_id: id });
+        if (res.ok) { FS.toast('Deleted', 'success'); loadSkills(); }
+        else FS.toast('Failed', 'danger');
+    };
+
+    document.getElementById('add-form').addEventListener('submit', async function (e) {
+        e.preventDefault();
+        const skill_name        = document.getElementById('skill-name').value.trim();
+        const proficiency_level = parseInt(document.getElementById('skill-level').value);
+        const btn = document.getElementById('btn-add');
+        btn.disabled = true; btn.textContent = 'Adding…';
+        const res = await FS.api('/api/skills/index.php', 'POST', { skill_name, proficiency_level });
+        if (res.ok) {
+            FS.toast('Skill added!', 'success');
+            document.getElementById('skill-name').value = '';
+            document.getElementById('skill-level').value = '5';
+            document.getElementById('level-display').textContent = '5';
+            loadSkills();
+        } else FS.toast(res.data.error || 'Failed', 'danger');
+        btn.disabled = false; btn.textContent = '+ Add';
+    });
+
+    await loadSkills();
+    FS.showLoading(false);
+    document.getElementById('fs-app').style.display = 'flex';
+})();
+</script>
+</body>
+</html>

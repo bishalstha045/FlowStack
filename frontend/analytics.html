@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Analytics — Visual charts of your habits, focus, and decisions on FlowStack.">
+    <title>Analytics — FlowStack</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="assets/css/app.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js" defer></script>
+</head>
+<body>
+<div id="fs-loading"><div class="fs-spinner"></div></div>
+<div class="fs-app" style="display:none" id="fs-app">
+    <div id="fs-overlay" class="sidebar-overlay"></div>
+    <aside id="fs-sidebar" class="sidebar"></aside>
+    <div class="fs-body">
+        <header id="fs-header" class="header"></header>
+        <main class="main-content">
+
+            <div class="page-header">
+                <div><h1>Analytics</h1><p>7-day behavioral charts habits, focus, decisions, skills</p></div>
+            </div>
+
+            <div class="charts-grid">
+
+                <!-- Habit completions -->
+                <div class="chart-card">
+                    <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:.25rem">
+                        <div>
+                            <h3>Habit Completions</h3>
+                            <p>Daily completions — last 7 days</p>
+                        </div>
+                        <span class="chart-badge bar">Bar</span>
+                    </div>
+                    <div class="chart-wrap"><canvas id="habit-chart"></canvas></div>
+                </div>
+
+                <!-- Focus minutes -->
+                <div class="chart-card">
+                    <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:.25rem">
+                        <div>
+                            <h3>Focus Minutes</h3>
+                            <p>Minutes focused per day last 7 days</p>
+                        </div>
+                        <span class="chart-badge line">Line</span>
+                    </div>
+                    <div class="chart-wrap"><canvas id="focus-chart"></canvas></div>
+                </div>
+
+                <!-- Decision breakdown -->
+                <div class="chart-card">
+                    <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:.25rem">
+                        <div>
+                            <h3>Decision Outcomes</h3>
+                            <p>Good / Neutral / Bad breakdown</p>
+                        </div>
+                        <span class="chart-badge ring">Doughnut</span>
+                    </div>
+                    <div class="chart-wrap"><canvas id="decision-chart"></canvas></div>
+                </div>
+
+                <!-- Top habit streaks (polar) -->
+                <div class="chart-card">
+                    <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:.25rem">
+                        <div>
+                            <h3>Top Habit Streaks</h3>
+                            <p>Your 5 highest streak habits</p>
+                        </div>
+                        <span class="chart-badge polar">Polar</span>
+                    </div>
+                    <div class="chart-wrap"><canvas id="streak-chart"></canvas></div>
+                </div>
+
+            </div>
+
+        </main>
+    </div>
+</div>
+
+<script src="assets/js/app.js"></script>
+<script>
+(async function () {
+    const user = await FS.requireAuth();
+    if (!user) return;
+    FS.initLayout(user, 'analytics');
+
+    function makeChart(id, cfg) {
+        const ctx = document.getElementById(id);
+        if (!ctx) return;
+        return new Chart(ctx, cfg);
+    }
+
+    // ── Habit chart ─────────────────────────────────────────────
+    const hRes = await FS.api('/api/analytics/habit_chart.php');
+    if (hRes.ok) {
+        const { labels, data, top_streaks } = hRes.data;
+        makeChart('habit-chart', {
+            type: 'bar',
+            data: {
+                labels,
+                datasets: [{ label: 'Completions', data, backgroundColor: 'rgba(83,74,183,0.7)', borderRadius: 6, borderSkipped: false }]
+            },
+            options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true, ticks: { stepSize: 1 } } } }
+        });
+
+        // Streak polar
+        if (top_streaks && top_streaks.length) {
+            const streakLabels = top_streaks.map(s => s.name.length > 18 ? s.name.slice(0,18) + '…' : s.name);
+            const streakData   = top_streaks.map(s => s.streak);
+            makeChart('streak-chart', {
+                type: 'polarArea',
+                data: {
+                    labels: streakLabels,
+                    datasets: [{ data: streakData, backgroundColor: ['rgba(83,74,183,.7)','rgba(29,158,117,.7)','rgba(186,117,23,.7)','rgba(127,119,221,.7)','rgba(216,90,48,.7)'] }]
+                },
+                options: { responsive: true, maintainAspectRatio: false }
+            });
+        }
+    }
+
+    // ── Focus chart ──────────────────────────────────────────────
+    const fRes = await FS.api('/api/analytics/focus_chart.php');
+    if (fRes.ok) {
+        const { labels, data } = fRes.data;
+        makeChart('focus-chart', {
+            type: 'line',
+            data: {
+                labels,
+                datasets: [{ label: 'Minutes', data, borderColor: '#1D9E75', backgroundColor: 'rgba(29,158,117,0.1)', tension: 0.4, fill: true, pointRadius: 4 }]
+            },
+            options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true } } }
+        });
+    }
+
+    // ── Decision chart ───────────────────────────────────────────
+    const dRes = await FS.api('/api/analytics/decision_chart.php');
+    if (dRes.ok) {
+        const { breakdown, win_rate } = dRes.data;
+        makeChart('decision-chart', {
+            type: 'doughnut',
+            data: {
+                labels: ['Good ✅', 'Neutral ⚪', 'Bad ❌'],
+                datasets: [{ data: [breakdown.good, breakdown.neutral, breakdown.bad], backgroundColor: ['#1D9E75','#888780','#D85A30'], borderWidth: 2, borderColor: '#fff' }]
+            },
+            options: {
+                responsive: true, maintainAspectRatio: false,
+                plugins: {
+                    legend: { position: 'bottom' },
+                    tooltip: { callbacks: { afterLabel: () => 'Win rate: ' + win_rate + '%' } }
+                }
+            }
+        });
+    }
+
+    FS.showLoading(false);
+    document.getElementById('fs-app').style.display = 'flex';
+})();
+</script>
+</body>
+</html>

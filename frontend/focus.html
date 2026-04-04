@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Focus Tracker — Log deep work sessions on FlowStack.">
+    <title>Focus Tracker — FlowStack</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="assets/css/app.css">
+</head>
+<body>
+<div id="fs-loading"><div class="fs-spinner"></div></div>
+<div class="fs-app" style="display:none" id="fs-app">
+    <div id="fs-overlay" class="sidebar-overlay"></div>
+    <aside id="fs-sidebar" class="sidebar"></aside>
+    <div class="fs-body">
+        <header id="fs-header" class="header"></header>
+        <main class="main-content">
+
+            <div class="page-header">
+                <div><h1>Focus Tracker</h1><p>Deep work sessions quality over quantity</p></div>
+            </div>
+
+            <div class="stats-grid" style="grid-template-columns:repeat(3,1fr);margin-bottom:1.5rem">
+                <div class="stat-card"><div class="stat-label">Today's Focus</div><div class="stat-value" id="stat-today">— <span style="font-size:1.1rem;font-weight:400;color:var(--color-text-muted)">min</span></div></div>
+                <div class="stat-card"><div class="stat-label">Avg Session</div><div class="stat-value" id="stat-avg">— <span style="font-size:1.1rem;font-weight:400;color:var(--color-text-muted)">min</span></div></div>
+                <div class="stat-card"><div class="stat-label">This Week</div><div class="stat-value" id="stat-week">— <span style="font-size:1.1rem;font-weight:400;color:var(--color-text-muted)">hrs</span></div></div>
+            </div>
+
+            <div class="card" style="max-width:480px;margin:0 auto 2rem">
+                <div class="timer-display" id="timer-display" aria-live="polite" aria-atomic="true">00:00</div>
+                <div class="timer-label" id="timer-label">Ready to focus</div>
+                <div class="timer-actions">
+                    <button class="btn btn-primary btn-lg" id="btn-start" onclick="startTimer()">Start Session</button>
+                    <button class="btn btn-danger btn-lg"  id="btn-stop"    style="display:none" onclick="stopTimer()">Stop &amp; Save</button>
+                    <button class="btn btn-secondary btn-lg" id="btn-discard" style="display:none" onclick="discardTimer()">Discard</button>
+                </div>
+            </div>
+
+            <div class="section-title"><span>Recent Sessions</span></div>
+            <div id="sessions-container">
+                <div class="empty-state">
+                    <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+                    <h3>No sessions yet</h3>
+                    <p>Start a focus session above to track your deep work time.</p>
+                </div>
+            </div>
+
+        </main>
+    </div>
+</div>
+
+<script src="assets/js/app.js"></script>
+<script>
+(async function () {
+    const user = await FS.requireAuth();
+    if (!user) return;
+    FS.initLayout(user, 'focus');
+
+    let timerInterval = null, elapsedSecs = 0, running = false;
+    const display    = document.getElementById('timer-display');
+    const label      = document.getElementById('timer-label');
+    const btnStart   = document.getElementById('btn-start');
+    const btnStop    = document.getElementById('btn-stop');
+    const btnDiscard = document.getElementById('btn-discard');
+
+    function fmt(s) { return String(Math.floor(s/60)).padStart(2,'0') + ':' + String(s%60).padStart(2,'0'); }
+
+    window.startTimer = function () {
+        if (running) return;
+        running = true; elapsedSecs = 0;
+        display.textContent = '00:00'; label.textContent = 'Session in progress…';
+        btnStart.style.display = 'none'; btnStop.style.display = 'inline-flex'; btnDiscard.style.display = 'inline-flex';
+        timerInterval = setInterval(() => { elapsedSecs++; display.textContent = fmt(elapsedSecs); }, 1000);
+    };
+
+    window.stopTimer = async function () {
+        if (!running) return;
+        clearInterval(timerInterval); running = false;
+        const mins = Math.max(1, Math.round(elapsedSecs / 60));
+        label.textContent = 'Saving…';
+        const res = await FS.api('/api/focus/index.php', 'POST', { duration_minutes: mins });
+        if (res.ok) { FS.toast('Session saved! ' + mins + ' min focused 🎯', 'success'); loadStats(); }
+        else FS.toast(res.data.error || 'Save failed', 'danger');
+        resetTimer();
+    };
+
+    window.discardTimer = function () {
+        clearInterval(timerInterval); running = false; resetTimer();
+        FS.toast('Session discarded', 'danger');
+    };
+
+    function resetTimer() {
+        elapsedSecs = 0; display.textContent = '00:00'; label.textContent = 'Ready to focus';
+        btnStart.style.display = 'inline-flex'; btnStop.style.display = 'none'; btnDiscard.style.display = 'none';
+    }
+
+    async function loadStats() {
+        const res = await FS.api('/api/focus/index.php');
+        if (!res.ok) return;
+        const d = res.data;
+        document.getElementById('stat-today').innerHTML = d.today_minutes + ' <span style="font-size:1.1rem;font-weight:400;color:var(--color-text-muted)">min</span>';
+        document.getElementById('stat-avg').innerHTML   = d.avg_minutes   + ' <span style="font-size:1.1rem;font-weight:400;color:var(--color-text-muted)">min</span>';
+        document.getElementById('stat-week').innerHTML  = d.week_hours    + ' <span style="font-size:1.1rem;font-weight:400;color:var(--color-text-muted)">hrs</span>';
+
+        const sessions = d.sessions || [];
+        const cont = document.getElementById('sessions-container');
+        if (sessions.length === 0) {
+            cont.innerHTML = `<div class="empty-state"><svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg><h3>No sessions yet</h3><p>Start a focus session above.</p></div>`;
+            return;
+        }
+        const todMap = { morning:'🌅',afternoon:'☀️',evening:'🌆',night:'🌙' };
+        cont.innerHTML = `<div class="table-wrap"><table>
+            <thead><tr><th>Date</th><th>Duration</th><th>Time of Day</th></tr></thead>
+            <tbody>${sessions.map(s => `<tr>
+                <td>${FS.relDate(s.session_date)}</td>
+                <td><strong>${s.duration_minutes}</strong> min</td>
+                <td>${todMap[s.time_of_day]||''} ${s.time_of_day.charAt(0).toUpperCase()+s.time_of_day.slice(1)}</td>
+            </tr>`).join('')}</tbody>
+        </table></div>`;
+    }
+
+    await loadStats();
+    FS.showLoading(false);
+    document.getElementById('fs-app').style.display = 'flex';
+})();
+</script>
+</body>
+</html>

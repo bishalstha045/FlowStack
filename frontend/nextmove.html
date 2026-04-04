@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Next Move — Get rule-based advice on your situation from FlowStack.">
+    <title>Next Move — FlowStack</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="assets/css/app.css">
+</head>
+<body>
+<div id="fs-loading"><div class="fs-spinner"></div></div>
+<div class="fs-app" style="display:none" id="fs-app">
+    <div id="fs-overlay" class="sidebar-overlay"></div>
+    <aside id="fs-sidebar" class="sidebar"></aside>
+    <div class="fs-body">
+        <header id="fs-header" class="header"></header>
+        <main class="main-content">
+
+            <div class="page-header">
+                <div><h1>Next Move</h1><p>Describe your situation get 5 actionable steps</p></div>
+            </div>
+
+            <div class="card" style="margin-bottom:1.5rem">
+                <div class="section-title"><span>What's on your mind?</span></div>
+                <form id="nm-form" novalidate>
+                    <div class="form-group">
+                        <label for="situation">Your situation</label>
+                        <textarea id="situation" class="form-control" rows="4"
+                                  placeholder="e.g. I have a job interview next week and I'm not sure how to prepare…" required></textarea>
+                        <p class="form-hint">Min 10 characters. Topics: career, study, money, stress, relationships.</p>
+                    </div>
+                    <button type="submit" class="btn btn-primary" id="btn-submit">▶ Get My Next Move</button>
+                </form>
+            </div>
+
+            <div id="advice-section" style="display:none">
+                <div class="section-title"><span>Your Action Plan</span><span id="cluster-tag" class="badge badge-purple"></span></div>
+                <div id="advice-list" class="advice-list"></div>
+            </div>
+
+            <div style="margin-top:2rem">
+                <div class="section-title"><span>Previous Advice</span></div>
+                <div id="history-container"><p style="color:var(--color-text-muted);font-size:.875rem">Loading history…</p></div>
+            </div>
+
+        </main>
+    </div>
+</div>
+
+<script src="assets/js/app.js"></script>
+<script>
+(async function () {
+    const user = await FS.requireAuth();
+    if (!user) return;
+    FS.initLayout(user, 'nextmove');
+
+    async function loadHistory() {
+        const res = await FS.api('/api/nextmove/index.php');
+        const cont = document.getElementById('history-container');
+        if (!res.ok || !res.data.history?.length) {
+            cont.innerHTML = '<p style="color:var(--color-text-muted);font-size:.875rem">No history yet.</p>'; return;
+        }
+        cont.innerHTML = '<div style="display:flex;flex-direction:column;gap:.75rem">' +
+            res.data.history.map(h => `
+                <div class="card" style="padding:1rem">
+                    <div style="font-size:.75rem;color:var(--color-text-muted);margin-bottom:.35rem">${FS.relDate(h.created_at)}</div>
+                    <div style="font-size:.875rem;color:var(--color-text);margin-bottom:.5rem"><em>${FS.escape(h.situation_text)}</em></div>
+                    <pre style="font-size:.8rem;color:var(--color-text-muted);white-space:pre-wrap;font-family:inherit">${FS.escape(h.generated_advice)}</pre>
+                </div>`).join('') + '</div>';
+    }
+
+    document.getElementById('nm-form').addEventListener('submit', async function (e) {
+        e.preventDefault();
+        const situation_text = document.getElementById('situation').value.trim();
+        const btn = document.getElementById('btn-submit');
+        btn.disabled = true; btn.textContent = 'Thinking…';
+
+        const res = await FS.api('/api/nextmove/index.php', 'POST', { situation_text });
+        if (res.ok) {
+            const d = res.data;
+            document.getElementById('cluster-tag').textContent = d.cluster.charAt(0).toUpperCase() + d.cluster.slice(1);
+            document.getElementById('advice-list').innerHTML = d.advice.map((a, i) => `
+                <div class="advice-item">
+                    <div class="advice-num">${i+1}</div>
+                    <div>${FS.escape(a)}</div>
+                </div>`).join('');
+            document.getElementById('advice-section').style.display = 'block';
+            document.getElementById('advice-section').scrollIntoView({ behavior: 'smooth', block: 'start' });
+            loadHistory();
+        } else {
+            FS.toast(res.data.error || 'Failed to generate advice', 'danger');
+        }
+        btn.disabled = false; btn.textContent = '▶ Get My Next Move';
+    });
+
+    await loadHistory();
+    FS.showLoading(false);
+    document.getElementById('fs-app').style.display = 'flex';
+})();
+</script>
+</body>
+</html>

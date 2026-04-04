@@ -1,0 +1,4 @@
+# FlowStack — Backend Security
+# Prevents direct folder-listing of backend directories
+
+Options -Indexes

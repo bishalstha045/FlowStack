@@ -1,0 +1,25 @@
+# FlowStack — Apache Config
+# Disable directory listing site-wide
+
+Options -Indexes
+
+# Redirect root to index.html (which redirects to frontend/)
+DirectoryIndex index.html
+
+# Allow clean URLs (optional future use)
+<IfModule mod_rewrite.c>
+    RewriteEngine On
+    RewriteBase /FlowStack/
+
+    # If file exists, serve it directly
+    RewriteCond %{REQUEST_FILENAME} -f [OR]
+    RewriteCond %{REQUEST_FILENAME} -d
+    RewriteRule ^ - [L]
+</IfModule>
+
+# Security headers
+<IfModule mod_headers.c>
+    Header set X-Content-Type-Options "nosniff"
+    Header set X-Frame-Options "SAMEORIGIN"
+    Header set X-XSS-Protection "1; mode=block"
+</IfModule>

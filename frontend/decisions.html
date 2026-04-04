@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="DecisionLog — Log and analyze your decisions on FlowStack.">
+    <title>DecisionLog — FlowStack</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="assets/css/app.css">
+</head>
+<body>
+<div id="fs-loading"><div class="fs-spinner"></div></div>
+<div class="fs-app" style="display:none" id="fs-app">
+    <div id="fs-overlay" class="sidebar-overlay"></div>
+    <aside id="fs-sidebar" class="sidebar"></aside>
+    <div class="fs-body">
+        <header id="fs-header" class="header"></header>
+        <main class="main-content">
+
+            <div class="page-header">
+                <div><h1>DecisionLog</h1><p>Record decisions and track your win rate over time</p></div>
+            </div>
+
+            <!-- Stats -->
+            <div class="stats-grid" style="grid-template-columns:repeat(4,1fr);margin-bottom:1.5rem">
+                <div class="stat-card"><div class="stat-label">Win Rate</div><div class="stat-value" id="s-rate">—<span style="font-size:1rem">%</span></div></div>
+                <div class="stat-card"><div class="stat-label">Good</div><div class="stat-value" id="s-good" style="color:var(--color-teal)">—</div></div>
+                <div class="stat-card"><div class="stat-label">Bad</div><div class="stat-value" id="s-bad" style="color:var(--color-danger)">—</div></div>
+                <div class="stat-card"><div class="stat-label">Neutral</div><div class="stat-value" id="s-neutral" style="color:var(--color-text-muted)">—</div></div>
+            </div>
+
+            <!-- Add decision -->
+            <div class="card" style="margin-bottom:1.5rem">
+                <div class="section-title"><span>Log a Decision</span></div>
+                <form id="add-form" novalidate>
+                    <div class="form-group">
+                        <label for="decision-text">Decision</label>
+                        <textarea id="decision-text" class="form-control" rows="3" placeholder="Describe the decision you made…" required></textarea>
+                    </div>
+                    <div style="display:flex;gap:.75rem;align-items:flex-end">
+                        <div class="form-group" style="flex:1;margin-bottom:0">
+                            <label for="outcome">Outcome</label>
+                            <select id="outcome" class="form-control">
+                                <option value="good">✅ Good</option>
+                                <option value="neutral" selected>⚪ Neutral</option>
+                                <option value="bad">❌ Bad</option>
+                            </select>
+                        </div>
+                        <button type="submit" class="btn btn-primary" id="btn-add">+ Log</button>
+                    </div>
+                </form>
+            </div>
+
+            <!-- List -->
+            <div class="section-title"><span>Decision History</span><span id="d-count" class="badge badge-purple"></span></div>
+            <div id="decisions-container"><p style="color:var(--color-text-muted);font-size:.875rem">Loading…</p></div>
+            <div id="pagination" style="display:flex;gap:.5rem;margin-top:1rem;justify-content:center"></div>
+
+        </main>
+    </div>
+</div>
+
+<script src="assets/js/app.js"></script>
+<script>
+(async function () {
+    const user = await FS.requireAuth();
+    if (!user) return;
+    FS.initLayout(user, 'decisions');
+
+    let currentPage = 1;
+
+    async function loadDecisions(page) {
+        currentPage = page;
+        const res = await FS.api('/api/decisions/index.php?page=' + page);
+        if (!res.ok) return;
+        const d = res.data;
+
+        document.getElementById('s-rate').innerHTML    = d.stats.rate + '<span style="font-size:1rem">%</span>';
+        document.getElementById('s-good').textContent  = d.stats.good;
+        document.getElementById('s-bad').textContent   = d.stats.bad;
+        document.getElementById('s-neutral').textContent = d.stats.neutral;
+        document.getElementById('d-count').textContent = d.total + ' total';
+
+        const cont = document.getElementById('decisions-container');
+        if (!d.decisions.length) {
+            cont.innerHTML = `<div class="empty-state"><h3>No decisions logged</h3><p>Start tracking your decision patterns.</p></div>`;
+        } else {
+            cont.innerHTML = `<div class="table-wrap"><table>
+                <thead><tr><th>Decision</th><th>Outcome</th><th>Date</th><th></th></tr></thead>
+                <tbody>${d.decisions.map(item => `<tr>
+                    <td>${FS.escape(item.decision_text)}</td>
+                    <td><span class="badge badge-${item.outcome}">${item.outcome}</span></td>
+                    <td>${FS.relDate(item.created_at)}</td>
+                    <td><button class="btn btn-danger btn-sm" onclick="delDecision(${item.id})">✕</button></td>
+                </tr>`).join('')}</tbody>
+            </table></div>`;
+        }
+
+        // Pagination
+        const pg = document.getElementById('pagination');
+        pg.innerHTML = '';
+        for (let i = 1; i <= d.pages; i++) {
+            const b = document.createElement('button');
+            b.className = 'btn btn-sm ' + (i === page ? 'btn-primary' : 'btn-secondary');
+            b.textContent = i;
+            b.onclick = () => loadDecisions(i);
+            pg.appendChild(b);
+        }
+    }
+
+    window.delDecision = async function (id) {
+        if (!confirm('Delete this decision?')) return;
+        const res = await FS.api('/api/decisions/index.php?delete=1', 'POST', { decision_id: id });
+        if (res.ok) { FS.toast('Deleted', 'success'); loadDecisions(currentPage); }
+        else FS.toast('Failed', 'danger');
+    };
+
+    document.getElementById('add-form').addEventListener('submit', async function (e) {
+        e.preventDefault();
+        const decision_text = document.getElementById('decision-text').value.trim();
+        const outcome       = document.getElementById('outcome').value;
+        const btn = document.getElementById('btn-add');
+        btn.disabled = true; btn.textContent = 'Saving…';
+        const res = await FS.api('/api/decisions/index.php', 'POST', { decision_text, outcome });
+        if (res.ok) {
+            FS.toast('Decision logged!', 'success');
+            document.getElementById('decision-text').value = '';
+            document.getElementById('outcome').value = 'neutral';
+            loadDecisions(1);
+        } else FS.toast(res.data.error || 'Failed', 'danger');
+        btn.disabled = false; btn.textContent = '+ Log';
+    });
+
+    await loadDecisions(1);
+    FS.showLoading(false);
+    document.getElementById('fs-app').style.display = 'flex';
+})();
+</script>
+</body>
+</html>
