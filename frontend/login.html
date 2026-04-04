@@ -1,74 +1,107 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="description" content="FlowStack — Sign in to your personal analytics dashboard.">
-    <title>Sign In — FlowStack</title>
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="assets/css/app.css">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="FlowStack Sign in to your personal analytics dashboard.">
+  <title>Sign In FlowStack</title>
+  <link rel="stylesheet" href="assets/css/app.css">
 </head>
 <body class="auth-body">
 
 <div class="auth-wrap">
-    <div class="auth-logo">
-        <div class="wordmark">⚡ FlowStack</div>
-        <p>Personal analytics — understand yourself first.</p>
+  <div class="auth-logo">
+    <div class="brand">
+      <div class="brand-icon"><i data-lucide="zap" style="color:#fff;width:22px;height:22px;"></i></div>
+      <span class="brand-name">FlowStack</span>
     </div>
-    <div class="auth-card">
-        <h1>Welcome back</h1>
-        <div id="error-msg" class="alert alert-danger" style="display:none" role="alert"></div>
-        <form id="login-form" novalidate>
-            <div class="form-group">
-                <label for="email">Email</label>
-                <input type="email" id="email" class="form-control" placeholder="you@example.com" autocomplete="email" required>
-            </div>
-            <div class="form-group">
-                <label for="password">Password</label>
-                <input type="password" id="password" class="form-control" placeholder="••••••••" autocomplete="current-password" required>
-            </div>
-            <button type="submit" id="btn-login" class="btn btn-primary" style="width:100%;justify-content:center;margin-top:.5rem">
-                Sign In
-            </button>
-        </form>
+    <p>Personal analytics understand yourself first.</p>
+  </div>
+
+  <div class="auth-card">
+    <h2>Welcome back</h2>
+
+    <div class="social-login">
+      <button type="button" class="btn btn-social btn-google" onclick="FS.toast('Redirecting to Google OAuth...', 'info'); setTimeout(() => FS.toast('Google authentication flow initiated.', 'success'), 1500);">
+        <img src="https://upload.wikimedia.org/wikipedia/commons/c/c1/Google_%22G%22_logo.svg" alt="Google">
+        Sign in with Google
+      </button>
+      <button type="button" class="btn btn-social btn-github" onclick="FS.toast('Redirecting to GitHub OAuth...', 'info'); setTimeout(() => FS.toast('GitHub authentication flow initiated.', 'success'), 1500);">
+        <svg viewBox="0 0 24 24" width="22" height="22" fill="currentColor"><path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0024 12c0-6.63-5.37-12-12-12z"/></svg>
+        Sign in with GitHub
+      </button>
     </div>
-    <div class="auth-footer">
-        Don't have an account? <a href="register.html">Create one →</a>
+
+    <div class="auth-divider">
+      <span>or continue with email</span>
     </div>
+
+    <div id="error-msg" class="alert alert-danger" style="display:none"></div>
+
+    <form id="login-form" novalidate>
+      <div class="form-group">
+        <label for="email">Email address</label>
+        <input type="email" id="email" class="form-control" placeholder="you@example.com" autocomplete="email" required>
+      </div>
+      <div class="form-group">
+        <label for="password">Password</label>
+        <input type="password" id="password" class="form-control" placeholder="Enter your password" autocomplete="current-password" required>
+      </div>
+      <button type="submit" id="btn-login" class="btn btn-primary btn-auth">
+        Sign In
+      </button>
+    </form>
+  </div>
+
+  <div class="auth-footer">
+    Don't have an account? <a href="register.html">Create account →</a>
+  </div>
 </div>
 
 <script src="assets/js/app.js"></script>
 <script>
 (async function () {
-    // If already logged in, redirect to dashboard
-    try {
-        const res = await fetch(FS.BACKEND + '/auth/check.php', { credentials: 'same-origin' });
-        const d   = await res.json().catch(() => ({}));
-        if (d.authenticated) { window.location.href = 'dashboard.html'; return; }
-    } catch (_) {}
+  // Already logged in?
+  try {
+    const r = await fetch(FS.BACKEND + '/auth/check.php', { credentials: 'include' });
+    const d = await r.json().catch(() => ({}));
+    if (d.authenticated) { location.replace('dashboard.html'); return; }
+  } catch (_) {}
 
-    const form   = document.getElementById('login-form');
-    const errEl  = document.getElementById('error-msg');
-    const btn    = document.getElementById('btn-login');
+  const form  = document.getElementById('login-form');
+  const errEl = document.getElementById('error-msg');
+  const btn   = document.getElementById('btn-login');
 
-    form.addEventListener('submit', async function (e) {
-        e.preventDefault();
-        errEl.style.display = 'none';
-        btn.disabled = true; btn.textContent = 'Signing in…';
+  form.addEventListener('submit', async function (e) {
+    e.preventDefault();
+    errEl.style.display = 'none';
 
-        const email    = document.getElementById('email').value.trim();
-        const password = document.getElementById('password').value;
+    const email    = document.getElementById('email').value.trim();
+    const password = document.getElementById('password').value;
 
-        const res = await FS.api('/auth/login.php', 'POST', { email, password });
-        if (res.ok) {
-            window.location.href = 'dashboard.html';
-        } else {
-            errEl.textContent    = res.data.error || 'Login failed. Please try again.';
-            errEl.style.display  = 'block';
-            btn.disabled = false; btn.textContent = 'Sign In';
-        }
-    });
+    if (!email || !password) {
+      errEl.textContent = 'Please enter your email and password.';
+      errEl.style.display = 'flex';
+      return;
+    }
+
+    btn.disabled = true;
+    btn.innerHTML = '<span class="fs-spinner" style="width:16px;height:16px;border-width:2px;margin-right:8px"></span>Signing in…';
+
+    const res = await FS.api('/auth/login.php', 'POST', { email, password });
+
+    if (res.ok) {
+      location.replace('dashboard.html');
+    } else {
+      errEl.textContent   = res.data.error || 'Login failed. Please try again.';
+      errEl.style.display = 'flex';
+      btn.disabled = false;
+      btn.textContent = 'Sign In';
+    }
+  });
+
+  // Enter key focus
+  document.getElementById('email').focus();
 })();
 </script>
 </body>

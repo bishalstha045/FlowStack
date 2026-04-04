@@ -1,6 +1,6 @@
 <?php
 /**
- * FlowStack — Skills CRUD
+ * FlowStack — Skills CRUD + History Tracking
  * GET  → list + avg
  * POST → add { skill_name, proficiency_level }
  * POST ?delete=1 → delete { skill_id }
@@ -32,9 +32,16 @@ try {
     $level = max(1, min(10, (int)($body['proficiency_level'] ?? 5)));
     if (strlen($name) < 2) jsonError('Skill name too short.');
 
+    // Insert skill
     $ins = $pdo->prepare('INSERT INTO skills (user_id, skill_name, proficiency_level) VALUES (?,?,?)');
     $ins->execute([$uid, $name, $level]);
-    jsonOk(['id' => (int)$pdo->lastInsertId()], 201);
+    $skillId = (int)$pdo->lastInsertId();
+
+    // Record initial history
+    $pdo->prepare('INSERT INTO skill_history (skill_id, user_id, proficiency_level) VALUES (?,?,?)')
+        ->execute([$skillId, $uid, $level]);
+
+    jsonOk(['id' => $skillId], 201);
 
 } catch (Exception $e) {
     jsonError('Server error: ' . $e->getMessage(), 500);

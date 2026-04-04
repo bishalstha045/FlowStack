@@ -1,140 +1,219 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="description" content="DecisionLog — Log and analyze your decisions on FlowStack.">
-    <title>DecisionLog — FlowStack</title>
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="assets/css/app.css">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="DecisionLog Track decisions and get intelligent success rate analysis.">
+  <title>DecisionLog FlowStack</title>
+  <link rel="stylesheet" href="assets/css/app.css">
+  <link rel="stylesheet" href="assets/css/style.css">
 </head>
 <body>
-<div id="fs-loading"><div class="fs-spinner"></div></div>
-<div class="fs-app" style="display:none" id="fs-app">
-    <div id="fs-overlay" class="sidebar-overlay"></div>
-    <aside id="fs-sidebar" class="sidebar"></aside>
-    <div class="fs-body">
-        <header id="fs-header" class="header"></header>
-        <main class="main-content">
+<div id="fs-loading"><div class="fs-spinner"></div><span class="loading-text">Loading decisions…</span></div>
 
-            <div class="page-header">
-                <div><h1>DecisionLog</h1><p>Record decisions and track your win rate over time</p></div>
+<div class="fs-app" id="fs-app" style="display:none">
+  <div id="fs-overlay" class="sidebar-overlay"></div>
+  <aside id="fs-sidebar" class="sidebar"></aside>
+  <div class="fs-body">
+    <header id="fs-header" class="header"></header>
+    <main class="main-content">
+
+      <div class="page-header">
+        <div class="page-header-text">
+          <h1>DecisionLog</h1>
+          <p>Record every decision detect patterns, improve your judgment quality</p>
+        </div>
+      </div>
+
+      <!-- Win rate card -->
+      <div class="win-rate-card" id="winrate-card" style="display:none">
+        <div id="decision-gauge"></div>
+        <div class="win-rate-right">
+          <div class="prod-score-title">DECISION WIN RATE</div>
+          <div class="prod-score-val" id="wr-val"></div>
+          <div class="prod-score-sub" id="wr-sub"></div>
+          <div class="outcome-bars" id="outcome-bars"></div>
+        </div>
+      </div>
+
+      <!-- Intelligence panel -->
+      <div class="intel-panel" id="dec-intel-panel" style="display:none">
+        <div class="intel-header">
+          <h2><i data-lucide="brain" style="width:18px;height:18px;display:inline-block;vertical-align:middle;"></i> Decision Intelligence</h2>
+          <span class="intel-badge" id="dec-badge"></span>
+        </div>
+        <div id="dec-insights"></div>
+      </div>
+
+      <!-- Add decision -->
+      <div class="card" style="margin-bottom:20px">
+        <div class="card-title"><span>Log a Decision</span></div>
+        <form id="add-form" novalidate>
+          <div class="form-group">
+            <label for="decision-text">What decision did you make?</label>
+            <textarea id="decision-text" class="form-control" rows="3"
+              placeholder="Be specific the more detail, the more patterns you'll detect over time…" required></textarea>
+          </div>
+          <div style="display:flex;gap:10px;align-items:flex-end;flex-wrap:wrap">
+            <div class="form-group" style="flex:1;margin-bottom:0;min-width:160px">
+              <label for="outcome">How did / will it turn out?</label>
+              <select id="outcome" class="form-control">
+                <option value="good"><i data-lucide="check-circle" style="width:18px;height:18px;display:inline-block;vertical-align:middle;"></i> Good I'd make it again</option>
+                <option value="neutral" selected>⚪ Neutral unclear yet</option>
+                <option value="bad">❌ Bad I'd do differently</option>
+              </select>
             </div>
+            <button type="submit" id="btn-add" class="btn btn-primary" style="margin-bottom:0">+ Log Decision</button>
+          </div>
+          <div id="add-error" class="alert alert-danger" style="display:none;margin-top:10px"></div>
+        </form>
+      </div>
 
-            <!-- Stats -->
-            <div class="stats-grid" style="grid-template-columns:repeat(4,1fr);margin-bottom:1.5rem">
-                <div class="stat-card"><div class="stat-label">Win Rate</div><div class="stat-value" id="s-rate">—<span style="font-size:1rem">%</span></div></div>
-                <div class="stat-card"><div class="stat-label">Good</div><div class="stat-value" id="s-good" style="color:var(--color-teal)">—</div></div>
-                <div class="stat-card"><div class="stat-label">Bad</div><div class="stat-value" id="s-bad" style="color:var(--color-danger)">—</div></div>
-                <div class="stat-card"><div class="stat-label">Neutral</div><div class="stat-value" id="s-neutral" style="color:var(--color-text-muted)">—</div></div>
-            </div>
+      <!-- Stats -->
+      <div class="stats-grid" style="margin-bottom:20px">
+        <div class="stat-card"><div class="stat-card-top"><div class="stat-icon indigo">📝</div></div>
+          <div class="stat-value" id="s-total"></div><div class="stat-label">Total Decisions</div></div>
+        <div class="stat-card"><div class="stat-card-top"><div class="stat-icon green"><i data-lucide="check-circle" style="width:18px;height:18px;display:inline-block;vertical-align:middle;"></i></div></div>
+          <div class="stat-value" id="s-good" style="color:var(--success)"></div><div class="stat-label">Good</div></div>
+        <div class="stat-card"><div class="stat-card-top"><div class="stat-icon red">❌</div></div>
+          <div class="stat-value" id="s-bad" style="color:var(--danger)"></div><div class="stat-label">Bad</div></div>
+        <div class="stat-card"><div class="stat-card-top"><div class="stat-icon amber">⚪</div></div>
+          <div class="stat-value" id="s-neutral"></div><div class="stat-label">Neutral</div></div>
+      </div>
 
-            <!-- Add decision -->
-            <div class="card" style="margin-bottom:1.5rem">
-                <div class="section-title"><span>Log a Decision</span></div>
-                <form id="add-form" novalidate>
-                    <div class="form-group">
-                        <label for="decision-text">Decision</label>
-                        <textarea id="decision-text" class="form-control" rows="3" placeholder="Describe the decision you made…" required></textarea>
-                    </div>
-                    <div style="display:flex;gap:.75rem;align-items:flex-end">
-                        <div class="form-group" style="flex:1;margin-bottom:0">
-                            <label for="outcome">Outcome</label>
-                            <select id="outcome" class="form-control">
-                                <option value="good">✅ Good</option>
-                                <option value="neutral" selected>⚪ Neutral</option>
-                                <option value="bad">❌ Bad</option>
-                            </select>
-                        </div>
-                        <button type="submit" class="btn btn-primary" id="btn-add">+ Log</button>
-                    </div>
-                </form>
-            </div>
+      <!-- List -->
+      <div class="section-title">
+        <span>Decision History</span>
+        <span id="d-total" class="badge badge-primary"></span>
+      </div>
+      <div id="decisions-container"></div>
+      <div id="pagination" style="display:flex;gap:6px;margin-top:14px;justify-content:center;flex-wrap:wrap"></div>
 
-            <!-- List -->
-            <div class="section-title"><span>Decision History</span><span id="d-count" class="badge badge-purple"></span></div>
-            <div id="decisions-container"><p style="color:var(--color-text-muted);font-size:.875rem">Loading…</p></div>
-            <div id="pagination" style="display:flex;gap:.5rem;margin-top:1rem;justify-content:center"></div>
-
-        </main>
-    </div>
+    </main>
+  </div>
 </div>
 
 <script src="assets/js/app.js"></script>
+<script src="assets/js/intelligence.js"></script>
 <script>
 (async function () {
-    const user = await FS.requireAuth();
-    if (!user) return;
-    FS.initLayout(user, 'decisions');
+  const user = await FS.requireAuth();
+  if (!user) return;
+  FS.initLayout(user, 'decisions');
 
-    let currentPage = 1;
+  let page = 1;
 
-    async function loadDecisions(page) {
-        currentPage = page;
-        const res = await FS.api('/api/decisions/index.php?page=' + page);
-        if (!res.ok) return;
-        const d = res.data;
+  async function load(p) {
+    page = p;
+    const cont = document.getElementById('decisions-container');
+    cont.innerHTML = '<div class="skeleton" style="height:200px;border-radius:var(--r3)"></div>';
 
-        document.getElementById('s-rate').innerHTML    = d.stats.rate + '<span style="font-size:1rem">%</span>';
-        document.getElementById('s-good').textContent  = d.stats.good;
-        document.getElementById('s-bad').textContent   = d.stats.bad;
-        document.getElementById('s-neutral').textContent = d.stats.neutral;
-        document.getElementById('d-count').textContent = d.total + ' total';
+    const res = await FS.api('/api/decisions/index.php?page=' + p);
+    if (!res.ok) { cont.innerHTML = '<div class="alert alert-danger">Failed to load decisions.</div>'; return; }
 
-        const cont = document.getElementById('decisions-container');
-        if (!d.decisions.length) {
-            cont.innerHTML = `<div class="empty-state"><h3>No decisions logged</h3><p>Start tracking your decision patterns.</p></div>`;
-        } else {
-            cont.innerHTML = `<div class="table-wrap"><table>
-                <thead><tr><th>Decision</th><th>Outcome</th><th>Date</th><th></th></tr></thead>
-                <tbody>${d.decisions.map(item => `<tr>
-                    <td>${FS.escape(item.decision_text)}</td>
-                    <td><span class="badge badge-${item.outcome}">${item.outcome}</span></td>
-                    <td>${FS.relDate(item.created_at)}</td>
-                    <td><button class="btn btn-danger btn-sm" onclick="delDecision(${item.id})">✕</button></td>
-                </tr>`).join('')}</tbody>
-            </table></div>`;
-        }
+    const d = res.data;
+    document.getElementById('s-total').textContent   = d.total;
+    document.getElementById('s-good').textContent    = d.stats.good;
+    document.getElementById('s-bad').textContent     = d.stats.bad;
+    document.getElementById('s-neutral').textContent = d.stats.neutral;
+    document.getElementById('d-total').textContent   = d.total + ' total';
 
-        // Pagination
-        const pg = document.getElementById('pagination');
-        pg.innerHTML = '';
-        for (let i = 1; i <= d.pages; i++) {
-            const b = document.createElement('button');
-            b.className = 'btn btn-sm ' + (i === page ? 'btn-primary' : 'btn-secondary');
-            b.textContent = i;
-            b.onclick = () => loadDecisions(i);
-            pg.appendChild(b);
-        }
+    // Intelligence (needs at least 2 decisions to be meaningful)
+    if (d.total >= 2) {
+      const intel = Intel.decisions(d.decisions, d.stats);
+
+      document.getElementById('winrate-card').style.display = 'flex';
+      Intel.renderScoreGauge(intel.winRate, 'Win Rate', document.getElementById('decision-gauge'));
+      document.getElementById('wr-val').textContent = intel.winRate + '%';
+      const tier = intel.winRate >= 75 ? 'Exceptional Judgment' : intel.winRate >= 55 ? 'Above Average' : intel.winRate >= 35 ? 'Developing' : 'Needs Improvement';
+      document.getElementById('wr-sub').textContent = tier;
+
+      // Outcome bars
+      const bars = document.getElementById('outcome-bars');
+      const total = d.stats.good + d.stats.bad + d.stats.neutral;
+      const pct = n => total ? Math.round((n / total) * 100) : 0;
+      bars.innerHTML = `
+        <div class="outcome-row">
+          <span class="outcome-label">Good</span>
+          <div class="outcome-bar"><div class="outcome-fill" style="width:${pct(d.stats.good)}%;background:var(--success)"></div></div>
+          <span class="outcome-count">${d.stats.good}</span>
+        </div>
+        <div class="outcome-row">
+          <span class="outcome-label">Neutral</span>
+          <div class="outcome-bar"><div class="outcome-fill" style="width:${pct(d.stats.neutral)}%;background:var(--tx3)"></div></div>
+          <span class="outcome-count">${d.stats.neutral}</span>
+        </div>
+        <div class="outcome-row">
+          <span class="outcome-label">Bad</span>
+          <div class="outcome-bar"><div class="outcome-fill" style="width:${pct(d.stats.bad)}%;background:var(--danger)"></div></div>
+          <span class="outcome-count">${d.stats.bad}</span>
+        </div>`;
+
+      document.getElementById('dec-intel-panel').style.display = 'block';
+      const badge = document.getElementById('dec-badge');
+      badge.textContent = intel.winRate >= 60 ? 'Strong Judgment' : intel.winRate >= 40 ? 'Developing' : 'Needs Attention';
+      badge.className   = 'intel-badge badge-' + (intel.winRate >= 60 ? 'success' : intel.winRate >= 40 ? 'warn' : 'danger');
+      Intel.renderInsights(intel.insights, document.getElementById('dec-insights'));
     }
 
-    window.delDecision = async function (id) {
-        if (!confirm('Delete this decision?')) return;
-        const res = await FS.api('/api/decisions/index.php?delete=1', 'POST', { decision_id: id });
-        if (res.ok) { FS.toast('Deleted', 'success'); loadDecisions(currentPage); }
-        else FS.toast('Failed', 'danger');
-    };
+    if (!d.decisions.length) {
+      cont.innerHTML = `<div class="empty-state">
+        <div class="empty-icon"><i data-lucide="git-merge" style="width:18px;height:18px;display:inline-block;vertical-align:middle;"></i></div>
+        <h3>No decisions logged yet</h3>
+        <p>Start logging decisions above. After 5+, patterns emerge and the intelligence kicks in.</p>
+      </div>`;
+    } else {
+      const outcomeIcon = o => o === 'good' ? '<i data-lucide="check-circle" style="width:18px;height:18px;display:inline-block;vertical-align:middle;"></i>' : o === 'bad' ? '❌' : '⚪';
+      cont.innerHTML = `<div class="table-wrap"><table>
+        <thead><tr><th>Decision</th><th>Outcome</th><th>Date</th><th></th></tr></thead>
+        <tbody>${d.decisions.map(item => `<tr>
+          <td style="max-width:360px">${FS.escape(item.decision_text)}</td>
+          <td><span class="badge badge-${item.outcome}">${outcomeIcon(item.outcome)} ${item.outcome}</span></td>
+          <td style="white-space:nowrap">${FS.relDate(item.created_at)}</td>
+          <td><button class="btn btn-danger btn-sm" onclick="del(${item.id})">✕</button></td>
+        </tr>`).join('')}</tbody>
+      </table></div>`;
+    }
 
-    document.getElementById('add-form').addEventListener('submit', async function (e) {
-        e.preventDefault();
-        const decision_text = document.getElementById('decision-text').value.trim();
-        const outcome       = document.getElementById('outcome').value;
-        const btn = document.getElementById('btn-add');
-        btn.disabled = true; btn.textContent = 'Saving…';
-        const res = await FS.api('/api/decisions/index.php', 'POST', { decision_text, outcome });
-        if (res.ok) {
-            FS.toast('Decision logged!', 'success');
-            document.getElementById('decision-text').value = '';
-            document.getElementById('outcome').value = 'neutral';
-            loadDecisions(1);
-        } else FS.toast(res.data.error || 'Failed', 'danger');
-        btn.disabled = false; btn.textContent = '+ Log';
-    });
+    // Pagination
+    const pg = document.getElementById('pagination');
+    pg.innerHTML = d.pages > 1
+      ? Array.from({length: d.pages}, (_, i) => `<button class="btn btn-sm ${i+1===p?'btn-primary':'btn-secondary'}" onclick="load(${i+1})">${i+1}</button>`).join('')
+      : '';
+  }
 
-    await loadDecisions(1);
-    FS.showLoading(false);
-    document.getElementById('fs-app').style.display = 'flex';
+  window.del = async function (id) {
+    if (!confirm('Delete this decision permanently?')) return;
+    const res = await FS.api('/api/decisions/index.php?delete=1', 'POST', { decision_id: id });
+    if (res.ok) { FS.toast('Deleted.', 'success'); load(page); }
+    else FS.toast('Failed.', 'danger');
+  };
+
+  document.getElementById('add-form').addEventListener('submit', async function (e) {
+    e.preventDefault();
+    const errEl = document.getElementById('add-error');
+    errEl.style.display = 'none';
+    const decision_text = document.getElementById('decision-text').value.trim();
+    const outcome       = document.getElementById('outcome').value;
+    if (decision_text.length < 5) { errEl.textContent = 'Describe the decision (min 5 chars).'; errEl.style.display = 'flex'; return; }
+    const btn = document.getElementById('btn-add');
+    btn.disabled = true; btn.textContent = 'Saving…';
+    const res = await FS.api('/api/decisions/index.php', 'POST', { decision_text, outcome });
+    if (res.ok) {
+      FS.toast('Decision logged! 📝 Patterns emerge after 10+ entries.', 'success');
+      document.getElementById('decision-text').value = '';
+      document.getElementById('outcome').value = 'neutral';
+      load(1);
+    } else {
+      errEl.textContent = res.data.error || 'Failed.';
+      errEl.style.display = 'flex';
+    }
+    btn.disabled = false; btn.textContent = '+ Log Decision';
+  });
+
+  await load(1);
+  FS.showLoading(false);
+  document.getElementById('fs-app').style.display = 'flex';
 })();
 </script>
 </body>

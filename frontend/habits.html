@@ -1,149 +1,224 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="description" content="HabitSync — Track daily habits and build streaks on FlowStack.">
-    <title>HabitSync — FlowStack</title>
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="assets/css/app.css">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="HabitSync Intelligent habit tracking with streaks and smart feedback.">
+  <title>HabitSync FlowStack</title>
+  <link rel="stylesheet" href="assets/css/app.css">
+  <link rel="stylesheet" href="assets/css/style.css">
 </head>
 <body>
+<div id="fs-loading"><div class="fs-spinner"></div><span class="loading-text">Analyzing habits…</span></div>
 
-<div id="fs-loading"><div class="fs-spinner"></div></div>
+<div class="fs-app" id="fs-app" style="display:none">
+  <div id="fs-overlay" class="sidebar-overlay"></div>
+  <aside id="fs-sidebar" class="sidebar"></aside>
+  <div class="fs-body">
+    <header id="fs-header" class="header"></header>
+    <main class="main-content">
 
-<div class="fs-app" style="display:none" id="fs-app">
-    <div id="fs-overlay" class="sidebar-overlay"></div>
-    <aside id="fs-sidebar" class="sidebar"></aside>
-    <div class="fs-body">
-        <header id="fs-header" class="header"></header>
-        <main class="main-content">
+      <div class="page-header">
+        <div class="page-header-text">
+          <h1>HabitSync</h1>
+          <p>Smart habit tracking with consistency analysis and streaks</p>
+        </div>
+        <div id="habit-header-meta" class="page-header-actions"></div>
+      </div>
 
-            <div class="page-header">
-                <div>
-                    <h1>HabitSync</h1>
-                    <p>Track your daily habits and build streaks</p>
-                </div>
+      <!-- Score + Stats -->
+      <div class="prod-score-card" id="habit-score-card" style="display:none">
+        <div id="habit-gauge"></div>
+        <div class="prod-score-right">
+          <div class="prod-score-title">HABIT SCORE</div>
+          <div class="prod-score-val" id="hs-score"></div>
+          <div class="prod-score-sub" id="hs-label"></div>
+          <div class="prod-metric-row">
+            <div class="prod-metric">
+              <div class="val" id="hs-consistency">%</div>
+              <div class="lbl">Consistency</div>
             </div>
-
-            <!-- Add habit -->
-            <div class="card" style="margin-bottom:1.5rem">
-                <div class="section-title"><span>Add New Habit</span></div>
-                <form id="add-form" novalidate>
-                    <div style="display:flex;gap:.75rem;align-items:flex-end">
-                        <div class="form-group" style="flex:1;margin-bottom:0">
-                            <label for="habit-name">Habit Name</label>
-                            <input type="text" id="habit-name" class="form-control"
-                                   placeholder="e.g. Read for 20 minutes" maxlength="200" required>
-                        </div>
-                        <button type="submit" class="btn btn-primary" id="btn-add">+ Add Habit</button>
-                    </div>
-                </form>
+            <div class="prod-metric">
+              <div class="val" id="hs-streak"></div>
+              <div class="lbl">Best Streak</div>
             </div>
-
-            <!-- Habits list -->
-            <div class="section-title">
-                <span>Your Habits</span>
-                <span id="habit-count" class="badge badge-purple"></span>
+            <div class="prod-metric">
+              <div class="val" id="hs-done">/</div>
+              <div class="lbl">Done Today</div>
             </div>
-            <div id="habits-container">
-                <div class="empty-state">
-                    <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>
-                    <h3>No habits yet</h3>
-                    <p>Start building your first habit to unlock streak tracking.</p>
-                </div>
+            <div class="prod-metric">
+              <div class="val" id="hs-strong"></div>
+              <div class="lbl">Strong Habits</div>
             </div>
+          </div>
+        </div>
+      </div>
 
-        </main>
-    </div>
+      <!-- Intelligence panel -->
+      <div class="intel-panel" id="habit-insights-panel" style="display:none">
+        <div class="intel-header">
+          <h2><i data-lucide="brain" style="width:18px;height:18px;display:inline-block;vertical-align:middle;"></i> Intelligence Insights</h2>
+          <span class="intel-badge" id="hi-badge"></span>
+        </div>
+        <div id="habit-insights"></div>
+      </div>
+
+      <!-- Add habit -->
+      <div class="card" style="margin-bottom:20px">
+        <div class="card-title"><span>Add New Habit</span></div>
+        <form id="add-form" novalidate>
+          <div style="display:flex;gap:10px;align-items:flex-end">
+            <div class="form-group" style="flex:1;margin-bottom:0">
+              <label for="habit-name">Habit name</label>
+              <input type="text" id="habit-name" class="form-control" placeholder="e.g. Read for 20 minutes, Meditate, Exercise…" maxlength="200" required>
+            </div>
+            <button type="submit" id="btn-add" class="btn btn-primary">+ Add</button>
+          </div>
+          <div id="add-error" class="alert alert-danger" style="display:none;margin-top:10px"></div>
+        </form>
+      </div>
+
+      <!-- Habits list -->
+      <div class="section-title">
+        <span>Your Habits</span>
+        <span id="habit-count-badge"></span>
+      </div>
+      <div id="habits-container"></div>
+
+    </main>
+  </div>
 </div>
 
 <script src="assets/js/app.js"></script>
+<script src="assets/js/intelligence.js"></script>
 <script>
 (async function () {
-    const user = await FS.requireAuth();
-    if (!user) return;
-    FS.initLayout(user, 'habits');
+  const user = await FS.requireAuth();
+  if (!user) return;
+  FS.initLayout(user, 'habits');
 
-    const container = document.getElementById('habits-container');
-    const countEl   = document.getElementById('habit-count');
+  async function loadHabits() {
+    const cont = document.getElementById('habits-container');
+    cont.innerHTML = '<div style="display:flex;flex-direction:column;gap:8px">' +
+      [1,2,3].map(() => '<div class="skeleton" style="height:72px;border-radius:var(--r3)"></div>').join('') + '</div>';
 
-    async function loadHabits() {
-        const res = await FS.api('/api/habits/index.php');
-        if (!res.ok) { container.innerHTML = '<p style="color:var(--color-danger)">Failed to load habits.</p>'; return; }
-        const habits = res.data.habits || [];
-        countEl.textContent = habits.length + ' habit' + (habits.length !== 1 ? 's' : '');
-
-        if (habits.length === 0) {
-            container.innerHTML = `<div class="empty-state">
-                <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>
-                <h3>No habits yet</h3>
-                <p>Start building your first habit to unlock streak tracking.</p>
-            </div>`;
-            return;
-        }
-
-        container.innerHTML = `<div class="habit-list">${habits.map(h => `
-            <div class="habit-item" id="habit-${h.id}">
-                <button class="habit-check ${h.done_today ? 'done' : ''}"
-                        onclick="toggleHabit(${h.id}, ${h.done_today ? 1 : 0})"
-                        aria-label="${h.done_today ? 'Completed' : 'Mark complete'}"
-                        title="${h.done_today ? '✓ Done today' : 'Mark as done'}">
-                    ${h.done_today ? '✓' : ''}
-                </button>
-                <div class="habit-info">
-                    <div class="habit-name">${FS.escape(h.name)}</div>
-                    <div class="habit-meta">
-                        <span class="streak">🔥 ${h.streak} day streak</span>
-                        <span>${h.pct_week}% this week</span>
-                        ${h.last_completed ? '<span>Last: ' + FS.relDate(h.last_completed) + '</span>' : ''}
-                    </div>
-                    <div class="progress-wrap" style="margin-top:.45rem;max-width:200px">
-                        <div class="progress-bar" style="width:${h.pct_week}%"></div>
-                    </div>
-                </div>
-                <div class="habit-actions">
-                    <button class="btn btn-danger btn-sm" onclick="deleteHabit(${h.id}, '${FS.escape(h.name)}')" aria-label="Delete habit">✕</button>
-                </div>
-            </div>`).join('')}
-        </div>`;
+    const res = await FS.api('/api/habits/index.php');
+    if (!res.ok) {
+      cont.innerHTML = '<div class="alert alert-danger">Failed to load. <button onclick="loadHabits()" class="btn btn-sm btn-secondary" style="margin-left:8px">Retry</button></div>';
+      return;
     }
 
-    window.toggleHabit = async function (id, done) {
-        if (done) return;
-        const res = await FS.api('/api/habits/update.php', 'POST', { habit_id: id });
-        if (res.ok) { FS.toast('Habit marked complete! 🎉', 'success'); loadHabits(); }
-        else FS.toast(res.data.error || 'Failed', 'danger');
-    };
+    const habits = res.data.habits || [];
+    document.getElementById('habit-count-badge').innerHTML =
+      `<span class="badge badge-primary">${habits.length} habit${habits.length !== 1 ? 's' : ''}</span>`;
+    document.getElementById('habit-header-meta').innerHTML =
+      habits.filter(h => h.done_today).length + '/' + habits.length + ' done today';
 
-    window.deleteHabit = async function (id, name) {
-        if (!confirm('Delete habit "' + name + '"?')) return;
-        const res = await FS.api('/api/habits/delete.php', 'POST', { habit_id: id });
-        if (res.ok) { FS.toast('Habit deleted', 'success'); loadHabits(); }
-        else FS.toast('Failed to delete', 'danger');
-    };
+    // Intelligence
+    const intel = Intel.habits(habits);
 
-    document.getElementById('add-form').addEventListener('submit', async function (e) {
-        e.preventDefault();
-        const name = document.getElementById('habit-name').value.trim();
-        if (!name) return;
-        const btn = document.getElementById('btn-add');
-        btn.disabled = true; btn.textContent = 'Adding…';
-        const res = await FS.api('/api/habits/add.php', 'POST', { name });
-        if (res.ok) {
-            FS.toast('Habit added!', 'success');
-            document.getElementById('habit-name').value = '';
-            loadHabits();
-        } else {
-            FS.toast(res.data.error || 'Failed', 'danger');
-        }
-        btn.disabled = false; btn.textContent = '+ Add Habit';
-    });
+    if (intel && habits.length) {
+      // Score gauge
+      document.getElementById('habit-score-card').style.display = 'flex';
+      Intel.renderScoreGauge(intel.score, 'Score', document.getElementById('habit-gauge'));
+      document.getElementById('hs-score').textContent       = intel.score + '/100';
+      const tier = intel.score >= 80 ? 'Elite consistency' : intel.score >= 65 ? 'Strong' : intel.score >= 50 ? 'Building' : 'Needs work';
+      document.getElementById('hs-label').textContent       = tier;
+      document.getElementById('hs-consistency').textContent = intel.metrics.avgConsistency + '%';
+      document.getElementById('hs-streak').textContent      = intel.metrics.maxStreak + ' days';
+      document.getElementById('hs-done').textContent        = intel.metrics.doneToday + '/' + intel.metrics.total;
+      document.getElementById('hs-strong').textContent      = intel.metrics.strong;
 
-    await loadHabits();
-    FS.showLoading(false);
-    document.getElementById('fs-app').style.display = 'flex';
+      // Insights panel
+      document.getElementById('habit-insights-panel').style.display = 'block';
+      const badge = document.getElementById('hi-badge');
+      badge.textContent  = intel.score >= 65 ? 'On Track' : 'Needs Attention';
+      badge.className = 'intel-badge badge-' + (intel.score >= 65 ? 'success' : intel.score >= 45 ? 'warn' : 'danger');
+      Intel.renderInsights(intel.insights, document.getElementById('habit-insights'));
+    }
+
+    // Build per-habit feedback map
+    const fbMap = {};
+    intel?.perHabit?.forEach(p => { fbMap[p.id] = p; });
+
+    if (!habits.length) {
+      cont.innerHTML = `<div class="empty-state">
+        <div class="empty-icon"><i data-lucide="check-circle" style="width:18px;height:18px;display:inline-block;vertical-align:middle;"></i></div>
+        <h3>No habits yet</h3>
+        <p>Add your first habit above. Start small even "drink a glass of water" counts.</p>
+      </div>`;
+      return;
+    }
+
+    // Color for feedback
+    const fbClass = pct => pct >= 80 ? 'fb-good' : pct >= 50 ? 'fb-warn' : 'fb-danger';
+
+    cont.innerHTML = '<div class="habit-list">' + habits.map(h => {
+      const fb  = fbMap[h.id];
+      const pct = h.pct_week || 0;
+      return `
+        <div class="habit-item" id="h${h.id}">
+          <button class="habit-check ${h.done_today ? 'done' : ''}"
+                  onclick="markDone(${h.id}, ${h.done_today ? 1 : 0})"
+                  title="${h.done_today ? '✓ Done today' : 'Mark complete'}" aria-label="Mark complete">
+            ${h.done_today ? '✓' : ''}
+          </button>
+          <div class="habit-info">
+            <div class="habit-name" style="${h.done_today ? 'opacity:.55;text-decoration:line-through' : ''}">${FS.escape(h.name)}</div>
+            <div class="habit-meta">
+              <span class="streak"><i data-lucide="flame" style="width:18px;height:18px;display:inline-block;vertical-align:middle;"></i> ${h.streak} day streak</span>
+              <span>${pct}% this week</span>
+              ${h.last_completed ? `<span>Last: ${FS.relDate(h.last_completed)}</span>` : ''}
+            </div>
+            ${fb ? `<div class="habit-feedback ${fbClass(pct)}">${FS.escape(fb.feedback)}</div>` : ''}
+            <div class="progress-wrap" style="margin-top:6px;max-width:240px">
+              <div class="progress-bar ${pct>=70?'green':pct<40?'red':''}" style="width:${pct}%"></div>
+            </div>
+          </div>
+          <div class="habit-actions">
+            <button class="btn btn-danger btn-sm" onclick="deleteHabit(${h.id},'${FS.escape(h.name)}')" title="Delete">✕</button>
+          </div>
+        </div>`;
+    }).join('') + '</div>';
+  }
+
+  window.markDone = async function (id, done) {
+    if (done) { FS.toast('Already done today! Come back tomorrow. 💪', 'info'); return; }
+    const res = await FS.api('/api/habits/update.php', 'POST', { habit_id: id });
+    if (res.ok) { FS.toast(`🎉 Habit complete! Streak updated to ${res.data.streak} days.`, 'success'); loadHabits(); }
+    else FS.toast(res.data.error || 'Failed', 'danger');
+  };
+
+  window.deleteHabit = async function (id, name) {
+    if (!confirm(`Delete "${name}"? This removes all history.`)) return;
+    const res = await FS.api('/api/habits/delete.php', 'POST', { habit_id: id });
+    if (res.ok) { FS.toast('Habit deleted.', 'success'); loadHabits(); }
+    else FS.toast('Failed to delete.', 'danger');
+  };
+
+  document.getElementById('add-form').addEventListener('submit', async function (e) {
+    e.preventDefault();
+    const errEl = document.getElementById('add-error');
+    errEl.style.display = 'none';
+    const name = document.getElementById('habit-name').value.trim();
+    if (!name) { errEl.textContent = 'Habit name required.'; errEl.style.display = 'flex'; return; }
+    const btn = document.getElementById('btn-add');
+    btn.disabled = true; btn.textContent = 'Adding…';
+    const res = await FS.api('/api/habits/add.php', 'POST', { name });
+    if (res.ok) {
+      FS.toast('Habit added! Start your streak today. <i data-lucide="check-circle" style="width:18px;height:18px;display:inline-block;vertical-align:middle;"></i>', 'success');
+      document.getElementById('habit-name').value = '';
+      loadHabits();
+    } else {
+      errEl.textContent = res.data.error || 'Failed.';
+      errEl.style.display = 'flex';
+    }
+    btn.disabled = false; btn.textContent = '+ Add';
+  });
+
+  await loadHabits();
+  FS.showLoading(false);
+  document.getElementById('fs-app').style.display = 'flex';
 })();
 </script>
 </body>

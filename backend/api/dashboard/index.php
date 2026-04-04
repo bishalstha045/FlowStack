@@ -28,12 +28,12 @@ try {
     $insights = [];
     foreach ($habits as $h) {
         if ((int)$h['streak'] >= 7)
-            $insights[] = "🔥 {$h['streak']}-day streak on \"{$h['name']}\" — keep it going!";
+            $insights[] = "🔥 {$h['streak']} day streak on \"{$h['name']}\" keep it going!";
     }
     if ($focusMins >= 120)
         $insights[] = "⏱️ You've logged " . round($focusMins/60,1) . " hours of focus this week.";
     if ($successRate >= 70 && $totalDec > 0)
-        $insights[] = "✅ Your decision win rate is {$successRate}% — excellent judgment.";
+        $insights[] = "✅ Your decision win rate is {$successRate}% excellent judgment.";
     if (empty($insights))
         $insights[] = "👋 Start by adding your first habit to build momentum.";
 

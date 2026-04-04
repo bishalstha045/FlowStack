@@ -1,127 +1,231 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="description" content="Path Compare Score two options and pick the better path on FlowStack.">
-    <title>Path Compare FlowStack</title>
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="assets/css/app.css">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="Path Compare Score two paths and get a data-driven recommendation.">
+  <title>Path Compare FlowStack</title>
+  <link rel="stylesheet" href="assets/css/app.css">
+  <link rel="stylesheet" href="assets/css/style.css">
 </head>
 <body>
-<div id="fs-loading"><div class="fs-spinner"></div></div>
-<div class="fs-app" style="display:none" id="fs-app">
-    <div id="fs-overlay" class="sidebar-overlay"></div>
-    <aside id="fs-sidebar" class="sidebar"></aside>
-    <div class="fs-body">
-        <header id="fs-header" class="header"></header>
-        <main class="main-content">
+<div id="fs-loading"><div class="fs-spinner"></div><span class="loading-text">Loading…</span></div>
 
-            <div class="page-header">
-                <div><h1>Path Compare</h1><p>Score two options side-by-side and decide with data</p></div>
+<div class="fs-app" id="fs-app" style="display:none">
+  <div id="fs-overlay" class="sidebar-overlay"></div>
+  <aside id="fs-sidebar" class="sidebar"></aside>
+  <div class="fs-body">
+    <header id="fs-header" class="header"></header>
+    <main class="main-content">
+
+      <div class="page-header">
+        <div class="page-header-text">
+          <h1>Path Compare</h1>
+          <p>Enter two options get a scored comparison with clear recommendation</p>
+        </div>
+      </div>
+
+      <!-- Form -->
+      <div class="card" style="margin-bottom:20px">
+        <div class="card-title"><span>Compare Two Options</span></div>
+        <form id="compare-form" novalidate>
+          <div class="compare-cols">
+            <div class="form-group" style="margin-bottom:0">
+              <label for="option-a">Option A</label>
+              <textarea id="option-a" class="form-control" rows="5"
+                placeholder="e.g. Accept job offer at Company X stable salary of $60k, remote work, good culture, some boring tasks…" required></textarea>
             </div>
-
-            <div class="card" style="margin-bottom:1.5rem">
-                <div class="section-title"><span>Compare Two Options</span></div>
-                <form id="compare-form" novalidate>
-                    <div class="compare-grid">
-                        <div class="form-group">
-                            <label for="option-a">Option A</label>
-                            <textarea id="option-a" class="form-control" rows="3" placeholder="e.g. Accept the offer at Company X stable salary, remote work, good benefits…" required></textarea>
-                        </div>
-                        <div class="form-group">
-                            <label for="option-b">Option B</label>
-                            <textarea id="option-b" class="form-control" rows="3" placeholder="e.g. Start my own freelance business freedom, uncertain income, passionate…" required></textarea>
-                        </div>
-                    </div>
-                    <button type="submit" class="btn btn-primary" id="btn-compare">⚖ Compare Paths</button>
-                </form>
+            <div class="form-group" style="margin-bottom:0">
+              <label for="option-b">Option B</label>
+              <textarea id="option-b" class="form-control" rows="5"
+                placeholder="e.g. Go freelance freedom to choose projects, income uncertainty, need 3 months savings runway…" required></textarea>
             </div>
+          </div>
+          <p class="form-hint" style="margin-top:8px">💡 Be specific more detail = more accurate scoring. Mention time, money, risk, learning, and lifestyle impact.</p>
+          <div id="compare-error" class="alert alert-danger" style="display:none;margin-top:10px"></div>
+          <div style="margin-top:14px">
+            <button type="submit" class="btn btn-primary" id="btn-compare"><i data-lucide="scale" style="width:18px;height:18px;display:inline-block;vertical-align:middle;"></i> Analyze Paths</button>
+          </div>
+        </form>
+      </div>
 
-            <div id="result-section" style="display:none">
-                <div class="compare-result-grid">
-                    <div class="compare-col">
-                        <h3>Option A</h3>
-                        <div class="dim-row"><span class="dim-name">Positive signals</span><span class="dim-score" id="a-pos">—</span></div>
-                        <div class="dim-row"><span class="dim-name">Risk signals</span><span class="dim-score" id="a-neg" style="color:var(--color-danger)">—</span></div>
-                        <div class="dim-row"><span class="dim-name">Net score</span><span class="dim-score" id="a-net">—</span></div>
-                    </div>
-                    <div class="compare-col">
-                        <h3>Option B</h3>
-                        <div class="dim-row"><span class="dim-name">Positive signals</span><span class="dim-score" id="b-pos">—</span></div>
-                        <div class="dim-row"><span class="dim-name">Risk signals</span><span class="dim-score" id="b-neg" style="color:var(--color-danger)">—</span></div>
-                        <div class="dim-row"><span class="dim-name">Net score</span><span class="dim-score" id="b-net">—</span></div>
-                    </div>
-                </div>
-                <div class="winner-banner" id="winner-banner">
-                    <h3 id="winner-title">—</h3>
-                    <p id="winner-reason">—</p>
-                </div>
-            </div>
+      <!-- Result -->
+      <div id="result-section" style="display:none;margin-bottom:24px">
+        <div class="section-title" style="margin-bottom:14px"><span>Analysis Result</span></div>
+        <div class="compare-cols" style="margin-bottom:14px">
+          <div class="compare-col" id="col-a"></div>
+          <div class="compare-col" id="col-b"></div>
+        </div>
+        <div class="winner-card" id="winner-card"></div>
+        <div class="intel-panel" style="margin-top:14px">
+          <div class="intel-header"><h2><i data-lucide="brain" style="width:18px;height:18px;display:inline-block;vertical-align:middle;"></i> Detailed Analysis</h2></div>
+          <div id="compare-insights"></div>
+        </div>
+      </div>
 
-            <div style="margin-top:2rem">
-                <div class="section-title"><span>Past Comparisons</span></div>
-                <div id="history-container"><p style="color:var(--color-text-muted);font-size:.875rem">Loading…</p></div>
-            </div>
+      <!-- History -->
+      <div class="section-title"><span>Past Comparisons</span></div>
+      <div id="history-container"></div>
 
-        </main>
-    </div>
+    </main>
+  </div>
 </div>
 
 <script src="assets/js/app.js"></script>
+<script src="assets/js/intelligence.js"></script>
 <script>
-(async function () {
-    const user = await FS.requireAuth();
-    if (!user) return;
-    FS.initLayout(user, 'pathcompare');
+// ── Client-side path scoring engine ──────────────────────────────
+function scorePath(text) {
+  const t = text.toLowerCase();
+  let pos = 0, neg = 0;
 
-    async function loadHistory() {
-        const res = await FS.api('/api/pathcompare/index.php');
-        const cont = document.getElementById('history-container');
-        if (!res.ok || !res.data.history?.length) {
-            cont.innerHTML = '<p style="color:var(--color-text-muted);font-size:.875rem">No comparisons yet.</p>'; return;
-        }
-        cont.innerHTML = `<div class="table-wrap"><table>
-            <thead><tr><th>Option A</th><th>Option B</th><th>Winner</th><th>Date</th></tr></thead>
-            <tbody>${res.data.history.map(h => `<tr>
-                <td style="max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${FS.escape(h.option_a)}">${FS.escape(h.option_a.slice(0,60))}…</td>
-                <td style="max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${FS.escape(h.option_b)}">${FS.escape(h.option_b.slice(0,60))}…</td>
-                <td><span class="badge badge-purple">Option ${h.selected_option}</span></td>
-                <td>${FS.relDate(h.created_at)}</td>
-            </tr>`).join('')}</tbody>
-        </table></div>`;
+  // Growth / opportunity signals
+  const posTerms = [
+    ['career growth', 4], ['learning', 3], ['skill', 2], ['opportunity', 3], ['promotion', 4],
+    ['leadership', 3], ['mentor', 3], ['experience', 2], ['health', 2], ['flexibility', 3],
+    ['remote', 2], ['freedom', 3], ['passion', 3], ['autonomy', 3], ['stability', 2],
+    ['salary increase', 4], ['high pay', 3], ['good pay', 2], ['work life', 2], ['balance', 2],
+    ['team', 1], ['culture', 2], ['purpose', 3], ['impact', 3], ['connect', 1],
+    ['savings', 2], ['invest', 2], ['profitable', 3], ['scalable', 3], ['dream', 2],
+  ];
+  // Risk / downside signals
+  const negTerms = [
+    ['risk', 3], ['uncertain', 3], ['difficult', 2], ['hard', 1], ['stress', 3],
+    ['toxic', 5], ['boring', 3], ['dead end', 4], ['low pay', 3], ['overtime', 3],
+    ['commute', 2], ['politics', 3], ['micromanage', 4], ['lay', 3], ['debt', 4],
+    ['expensive', 3], ['unstable', 4], ['anxiety', 3], ['exhausting', 3], ['cut',2],
+    ['no growth', 5], ['limited', 2], ['leave family', 3], ['sacrifice', 2], ['compromise', 2],
+  ];
+
+  posTerms.forEach(([term, w]) => { if (t.includes(term)) pos += w; });
+  negTerms.forEach(([term, w]) => { if (t.includes(term)) neg += w; });
+
+  // Word count bonus (more detail = more thoughtful)
+  const wordCount = t.split(/\s+/).length;
+  pos += Math.min(wordCount / 15, 3);
+
+  return { positive: Math.round(pos), negative: Math.round(neg), net: Math.round(pos - neg) };
+}
+
+function generateInsights(scoreA, scoreB, optA, optB, selected) {
+  const insights = [];
+  const winner   = selected === 'A' ? 'Option A' : 'Option B';
+  const loser    = selected === 'A' ? 'Option B' : 'Option A';
+  const sWin     = selected === 'A' ? scoreA : scoreB;
+  const sLose    = selected === 'A' ? scoreB : scoreA;
+  const margin   = Math.abs(sWin.net - sLose.net);
+
+  if (margin <= 2) {
+    insights.push({ t: 'warn', msg: `⚠️ This is extremely close (net difference: ${margin}). The AI can't separate them clearly your gut feeling should be the tiebreaker.` });
+  } else if (margin <= 5) {
+    insights.push({ t: 'info', msg: `<i data-lucide="bar-chart" style="width:18px;height:18px;display:inline-block;vertical-align:middle;"></i> ${winner} has a slight edge (margin: ${margin} points). Both options have real merit this comes down to your personal values and risk tolerance.` });
+  } else {
+    insights.push({ t: 'success', msg: `<i data-lucide="target" style="width:18px;height:18px;display:inline-block;vertical-align:middle;"></i> ${winner} wins clearly with a ${margin}-point lead. The analysis signal is strong.` });
+  }
+
+  if (sWin.negative > 5) {
+    insights.push({ t: 'warn', msg: `⚠️ ${winner} still has ${sWin.negative} risk signals. These won't disappear go in with eyes open and have a mitigation plan.` });
+  }
+
+  if (sLose.positive > 5) {
+    insights.push({ t: 'info', msg: `💡 ${loser} has ${sLose.positive} positive signals too. If ${winner} doesn't work out, ${loser} is a solid fallback.` });
+  }
+
+  insights.push({ t: 'info', msg: `📋 Decider's checklist: (1) Which option has NO going back? Prefer reversible choices. (2) Which would you regret NOT taking in 5 years? (3) Which aligns with who you want to become, not just what you want now?` });
+
+  return insights;
+}
+
+(async function () {
+  const user = await FS.requireAuth();
+  if (!user) return;
+  FS.initLayout(user, 'pathcompare');
+
+  async function loadHistory() {
+    const res  = await FS.api('/api/pathcompare/index.php');
+    const cont = document.getElementById('history-container');
+    if (!res.ok || !res.data.history?.length) {
+      cont.innerHTML = `<div class="empty-state"><div class="empty-icon"><i data-lucide="scale" style="width:18px;height:18px;display:inline-block;vertical-align:middle;"></i></div>
+        <h3>No comparisons yet</h3>
+        <p>Fill in two options above and click Analyze Paths.</p></div>`;
+      return;
+    }
+    cont.innerHTML = `<div class="table-wrap"><table>
+      <thead><tr><th>Option A</th><th>Option B</th><th>Winner</th><th>Date</th></tr></thead>
+      <tbody>${res.data.history.map(h => `<tr>
+        <td style="max-width:160px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${FS.escape(h.option_a.slice(0,55))}…</td>
+        <td style="max-width:160px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${FS.escape(h.option_b.slice(0,55))}…</td>
+        <td><span class="badge badge-primary">Option ${h.selected_option}</span></td>
+        <td style="white-space:nowrap">${FS.relDate(h.created_at)}</td>
+      </tr>`).join('')}</tbody>
+    </table></div>`;
+  }
+
+  document.getElementById('compare-form').addEventListener('submit', async function (e) {
+    e.preventDefault();
+    const errEl = document.getElementById('compare-error');
+    errEl.style.display = 'none';
+    const option_a = document.getElementById('option-a').value.trim();
+    const option_b = document.getElementById('option-b').value.trim();
+    if (option_a.length < 5 || option_b.length < 5) {
+      errEl.textContent = 'Both options need at least 5 characters for scoring.';
+      errEl.style.display = 'flex'; return;
     }
 
-    document.getElementById('compare-form').addEventListener('submit', async function (e) {
-        e.preventDefault();
-        const option_a = document.getElementById('option-a').value.trim();
-        const option_b = document.getElementById('option-b').value.trim();
-        const btn = document.getElementById('btn-compare');
-        btn.disabled = true; btn.textContent = 'Analyzing…';
+    const btn = document.getElementById('btn-compare');
+    btn.disabled = true;
+    btn.innerHTML = '<span class="fs-spinner" style="width:14px;height:14px;border-width:2px;margin-right:8px"></span>Scoring…';
 
-        const res = await FS.api('/api/pathcompare/index.php', 'POST', { option_a, option_b });
-        if (res.ok) {
-            const d = res.data;
-            document.getElementById('a-pos').textContent = d.score_a.positive;
-            document.getElementById('a-neg').textContent = d.score_a.negative;
-            document.getElementById('a-net').textContent = d.score_a.net;
-            document.getElementById('b-pos').textContent = d.score_b.positive;
-            document.getElementById('b-neg').textContent = d.score_b.negative;
-            document.getElementById('b-net').textContent = d.score_b.net;
-            document.getElementById('winner-title').textContent = '🏆 Recommended: Option ' + d.selected;
-            document.getElementById('winner-reason').textContent = d.reasoning;
-            document.getElementById('result-section').style.display = 'block';
-            document.getElementById('result-section').scrollIntoView({ behavior: 'smooth' });
-            loadHistory();
-        } else FS.toast(res.data.error || 'Failed', 'danger');
+    // Client-side scoring (fast, local)
+    const scoreA = scorePath(option_a);
+    const scoreB = scorePath(option_b);
+    const selected = scoreA.net >= scoreB.net ? 'A' : 'B';
+    const winner_score = selected === 'A' ? scoreA : scoreB;
+    const loser_score  = selected === 'A' ? scoreB : scoreA;
+    const margin = Math.abs(scoreA.net - scoreB.net);
+    const confidence = margin <= 2 ? 'Toss-up' : margin <= 5 ? 'Slight edge' : margin <= 10 ? 'Clear win' : 'Strong win';
 
-        btn.disabled = false; btn.textContent = '⚖ Compare Paths';
+    const reasoning = margin <= 2
+      ? 'These options are extremely balanced. The difference is negligible let your values and intuition decide.'
+      : `Option ${selected} scores ${margin} points higher. ${confidence}: ${selected === 'A' ? option_a.slice(0, 60) : option_b.slice(0, 60)}…`;
+
+    // Save via backend
+    const res = await FS.api('/api/pathcompare/index.php', 'POST', {
+      option_a, option_b, selected_option: selected,
+      score_a: scoreA.net, score_b: scoreB.net, reasoning
     });
 
-    await loadHistory();
-    FS.showLoading(false);
-    document.getElementById('fs-app').style.display = 'flex';
+    // Show result regardless of backend save
+    const renderCol = (id, label, score) => {
+      const net_color = score.net >= 0 ? 'var(--success)' : 'var(--danger)';
+      document.getElementById(id).innerHTML = `
+        <h4>${label}</h4>
+        <div class="score-row"><span class="score-label">Growth signals</span><span class="score-val" style="color:var(--success)">+${score.positive}</span></div>
+        <div class="score-row"><span class="score-label">Risk signals</span><span class="score-val" style="color:var(--danger)">-${score.negative}</span></div>
+        <div class="score-row"><span class="score-label">Net score</span><span class="score-val" style="color:${net_color};font-size:1.1rem">${score.net > 0?'+':''}${score.net}</span></div>`;
+    };
+    renderCol('col-a', '<i data-lucide="bar-chart" style="width:18px;height:18px;display:inline-block;vertical-align:middle;"></i> Option A', scoreA);
+    renderCol('col-b', '<i data-lucide="bar-chart" style="width:18px;height:18px;display:inline-block;vertical-align:middle;"></i> Option B', scoreB);
+
+    document.getElementById('winner-card').innerHTML = `
+      <h3>🏆 Recommended: Option ${selected} ${confidence}</h3>
+      <p>${reasoning}</p>`;
+
+    const insights = generateInsights(scoreA, scoreB, option_a, option_b, selected);
+    Intel.renderInsights(insights, document.getElementById('compare-insights'));
+
+    const rs = document.getElementById('result-section');
+    rs.style.display = 'block';
+    rs.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    FS.toast(`Path analysis complete! Option ${selected} recommended. <i data-lucide="scale" style="width:18px;height:18px;display:inline-block;vertical-align:middle;"></i>`, 'success');
+    loadHistory();
+
+    btn.disabled = false; btn.textContent = '<i data-lucide="scale" style="width:18px;height:18px;display:inline-block;vertical-align:middle;"></i> Analyze Paths';
+  });
+
+  await loadHistory();
+  FS.showLoading(false);
+  document.getElementById('fs-app').style.display = 'flex';
 })();
 </script>
 </body>

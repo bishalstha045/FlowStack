@@ -56,7 +56,7 @@ function jsonError(string $message, int $code = 400): void
 function requireAuth(): int
 {
     if (empty($_SESSION['user_id']) || !is_int($_SESSION['user_id'])) {
-        jsonError('Unauthorized — please log in.', 401);
+        jsonError('Unauthorized please log in.', 401);
     }
     return (int) $_SESSION['user_id'];
 }

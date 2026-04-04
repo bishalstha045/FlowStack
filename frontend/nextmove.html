@@ -1,103 +1,272 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="description" content="Next Move — Get rule-based advice on your situation from FlowStack.">
-    <title>Next Move — FlowStack</title>
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="assets/css/app.css">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="Next Move Get a 5-step action plan for any situation.">
+  <title>Next Move FlowStack</title>
+  <link rel="stylesheet" href="assets/css/app.css">
+  <link rel="stylesheet" href="assets/css/style.css">
 </head>
 <body>
-<div id="fs-loading"><div class="fs-spinner"></div></div>
-<div class="fs-app" style="display:none" id="fs-app">
-    <div id="fs-overlay" class="sidebar-overlay"></div>
-    <aside id="fs-sidebar" class="sidebar"></aside>
-    <div class="fs-body">
-        <header id="fs-header" class="header"></header>
-        <main class="main-content">
+<div id="fs-loading"><div class="fs-spinner"></div><span class="loading-text">Loading…</span></div>
 
-            <div class="page-header">
-                <div><h1>Next Move</h1><p>Describe your situation get 5 actionable steps</p></div>
-            </div>
+<div class="fs-app" id="fs-app" style="display:none">
+  <div id="fs-overlay" class="sidebar-overlay"></div>
+  <aside id="fs-sidebar" class="sidebar"></aside>
+  <div class="fs-body">
+    <header id="fs-header" class="header"></header>
+    <main class="main-content">
 
-            <div class="card" style="margin-bottom:1.5rem">
-                <div class="section-title"><span>What's on your mind?</span></div>
-                <form id="nm-form" novalidate>
-                    <div class="form-group">
-                        <label for="situation">Your situation</label>
-                        <textarea id="situation" class="form-control" rows="4"
-                                  placeholder="e.g. I have a job interview next week and I'm not sure how to prepare…" required></textarea>
-                        <p class="form-hint">Min 10 characters. Topics: career, study, money, stress, relationships.</p>
-                    </div>
-                    <button type="submit" class="btn btn-primary" id="btn-submit">▶ Get My Next Move</button>
-                </form>
-            </div>
+      <div class="page-header">
+        <div class="page-header-text">
+          <h1>Next Move</h1>
+          <p>Describe any situation get a personalised action plan instantly</p>
+        </div>
+      </div>
 
-            <div id="advice-section" style="display:none">
-                <div class="section-title"><span>Your Action Plan</span><span id="cluster-tag" class="badge badge-purple"></span></div>
-                <div id="advice-list" class="advice-list"></div>
-            </div>
+      <!-- Form -->
+      <div class="card" style="margin-bottom:20px">
+        <div class="card-title"><span>What are you dealing with?</span></div>
+        <div style="margin-bottom:14px;display:flex;gap:8px;flex-wrap:wrap" id="starter-prompts">
+          <button class="quick-btn" onclick="setPrompt('career')">💼 Career move</button>
+          <button class="quick-btn" onclick="setPrompt('study')">📚 Study plan</button>
+          <button class="quick-btn" onclick="setPrompt('money')">💰 Financial decision</button>
+          <button class="quick-btn" onclick="setPrompt('stress')">😰 Overwhelmed</button>
+          <button class="quick-btn" onclick="setPrompt('relationship')">❤️ Relationship</button>
+          <button class="quick-btn" onclick="setPrompt('habit')"><i data-lucide="check-circle" style="width:18px;height:18px;display:inline-block;vertical-align:middle;"></i> Habit struggle</button>
+        </div>
+        <form id="nm-form" novalidate>
+          <div class="form-group">
+            <label for="situation">Describe your situation in detail</label>
+            <textarea id="situation" class="form-control" rows="5"
+              placeholder="The more specific you are, the more actionable your plan will be…" required></textarea>
+            <p class="form-hint">Min 20 characters. The system analyzes intent and generates a tailored 5-step plan.</p>
+          </div>
+          <div id="nm-error" class="alert alert-danger" style="display:none;margin-bottom:12px"></div>
+          <button type="submit" class="btn btn-primary" id="btn-submit"><i data-lucide="compass" style="width:18px;height:18px;display:inline-block;vertical-align:middle;"></i> Get My Action Plan</button>
+        </form>
+      </div>
 
-            <div style="margin-top:2rem">
-                <div class="section-title"><span>Previous Advice</span></div>
-                <div id="history-container"><p style="color:var(--color-text-muted);font-size:.875rem">Loading history…</p></div>
-            </div>
+      <!-- Result -->
+      <div id="advice-section" style="display:none;margin-bottom:24px">
+        <div class="section-title" style="margin-bottom:14px">
+          <span>Your 5-Step Action Plan</span>
+          <span id="cluster-badge" class="badge badge-primary"></span>
+        </div>
+        <div id="advice-list"></div>
+        <div class="intel-panel" style="margin-top:14px">
+          <div class="intel-header"><h2><i data-lucide="brain" style="width:18px;height:18px;display:inline-block;vertical-align:middle;"></i> Context Intelligence</h2></div>
+          <div id="nm-context-insights"></div>
+        </div>
+      </div>
 
-        </main>
-    </div>
+      <!-- History -->
+      <div class="section-title"><span>Previous Action Plans</span></div>
+      <div id="history-container"></div>
+
+    </main>
+  </div>
 </div>
 
 <script src="assets/js/app.js"></script>
+<script src="assets/js/intelligence.js"></script>
 <script>
-(async function () {
-    const user = await FS.requireAuth();
-    if (!user) return;
-    FS.initLayout(user, 'nextmove');
+// ── Client-side advice engine ────────────────────────────────────
+const STARTER_PROMPTS = {
+  career: `I need to decide whether to accept a new job offer. My current role pays well but has no growth. The new offer is more challenging with better advancement opportunities.`,
+  study:  `I want to learn a new technical skill but I struggle to stay consistent. I have about 1 hour per day but keep getting distracted and giving up after a few days.`,
+  money:  `I have some savings and I'm not sure whether to pay off my debt, invest, or keep it as an emergency fund. I want to make a smart financial decision.`,
+  stress: `I feel completely overwhelmed with work, personal commitments, and side projects. I'm not sleeping well and everything feels urgent but I can't focus on anything.`,
+  relationship: `I'm having repeated conflicts with someone important to me. The same issues keep coming up and I'm not sure how to break the cycle or communicate better.`,
+  habit: `I keep starting good habits but can't maintain them past 2 weeks. I've tried exercise, reading, and journaling but they always fall off. I don't know what I'm doing wrong.`,
+};
 
-    async function loadHistory() {
-        const res = await FS.api('/api/nextmove/index.php');
-        const cont = document.getElementById('history-container');
-        if (!res.ok || !res.data.history?.length) {
-            cont.innerHTML = '<p style="color:var(--color-text-muted);font-size:.875rem">No history yet.</p>'; return;
-        }
-        cont.innerHTML = '<div style="display:flex;flex-direction:column;gap:.75rem">' +
-            res.data.history.map(h => `
-                <div class="card" style="padding:1rem">
-                    <div style="font-size:.75rem;color:var(--color-text-muted);margin-bottom:.35rem">${FS.relDate(h.created_at)}</div>
-                    <div style="font-size:.875rem;color:var(--color-text);margin-bottom:.5rem"><em>${FS.escape(h.situation_text)}</em></div>
-                    <pre style="font-size:.8rem;color:var(--color-text-muted);white-space:pre-wrap;font-family:inherit">${FS.escape(h.generated_advice)}</pre>
-                </div>`).join('') + '</div>';
+window.setPrompt = function (key) {
+  document.getElementById('situation').value = STARTER_PROMPTS[key] || '';
+  document.getElementById('situation').focus();
+};
+
+const ADVICE_DB = {
+  career: {
+    steps: [
+      'Write down your 1-year, 3-year, and 5-year career goals on paper now score both options (0–10) against each milestone.',
+      'Research the new company\'s track record: Glassdoor, LinkedIn, recent funding, and talk to 2 current/ex employees this week.',
+      'List your top 5 non-negotiables (salary floor, growth type, culture values). Check both against each one.',
+      'Simulate the worst case: if the new role fails after 6 months, what exactly happens? Is it survivable?',
+      'Set a decision deadline 5 days from now. Write your final reasoning in 3 sentences and commit.',
+    ],
+    cluster: 'Career',
+    contextInsights: [
+      { t: 'success', msg: '💼 Career decisions compound a worse salary for better growth often pays 10x in 5 years.' },
+      { t: 'info', msg: '<i data-lucide="bar-chart" style="width:18px;height:18px;display:inline-block;vertical-align:middle;"></i> Talk to 2 people who\'ve worked at the company. One bad review is noise; a pattern is signal.' },
+      { t: 'warn', msg: '⚠️ Don\'t make this decision when you\'re frustrated with your current job. Frustration is temporary; career moves are long-term.' },
+    ]
+  },
+  study: {
+    steps: [
+      'Define ONE specific goal: not "learn JavaScript" but "build a working to-do app in JavaScript by [specific date]."',
+      'Block 1 hour daily in your calendar as a non-negotiable commitment treat it like a doctor\'s appointment you can\'t miss.',
+      'Use the 2-minute rule: on difficult days, just open the material for 2 minutes. You will usually continue.',
+      'Remove friction: prepare your study environment 30 minutes before the session so you can start immediately.',
+      'Track streaks publicly (tell 1 friend) or privately (this habit tracker). External accountability doubles completion rates.',
+    ],
+    cluster: 'Study',
+    contextInsights: [
+      { t: 'success', msg: '📚 1 hour/day = 365 hours/year = 2 full-time work months of learning. Tiny input, massive compound result.' },
+      { t: 'info', msg: '<i data-lucide="brain" style="width:18px;height:18px;display:inline-block;vertical-align:middle;"></i> Spaced repetition beats cramming by 3x for retention. Use Anki or just revisit key concepts every 3 days.' },
+      { t: 'warn', msg: '⚡ Distraction is the enemy of learning. Phone in another room, Forest timer, or Pomodoro (25 min blocks) are proven methods.' },
+    ]
+  },
+  money: {
+    steps: [
+      'Build your "baseline" first: ensure you have 3 months of expenses in emergency savings before any other moves.',
+      'List every debt by interest rate (highest first). Pay off any debt above 7% before investing guaranteed return.',
+      'Research one low-cost index fund (e.g. S&P 500 ETF). Even investing 10% of savings monthly outperforms most active strategies.',
+      'Automate: set up automatic transfers on payday so decisions happen by default, not willpower.',
+      'Review in 90 days: set a calendar reminder to assess progress and adjust financial plans need quarterly check-ins.',
+    ],
+    cluster: 'Finance',
+    contextInsights: [
+      { t: 'success', msg: '💰 Emergency fund first, every time. It\'s not about returns it\'s about not being forced to sell at the worst time.' },
+      { t: 'info', msg: '📈 Index funds beat 90% of professional fund managers over 10 years. Low cost, boring, and it works.' },
+      { t: 'warn', msg: '⚠️ Avoid financial decisions based on FOMO (crypto hype, "hot tips"). The emotional tax is massive.' },
+    ]
+  },
+  stress: {
+    steps: [
+      'Write a brain dump: for 10 minutes, dump every stressor onto paper. Getting it out of your head reduces cognitive load immediately.',
+      'Sort your list using Eisenhower Matrix: Important + Urgent (do now), Important + Not Urgent (schedule), else (delegate or drop).',
+      'Protect sleep at ALL costs 7-9 hrs. One week of good sleep changes your perspective on every stressor.',
+      'Find the ONE thing that would make the most difference if done TODAY. Do only that. Everything else waits.',
+      'Create a "done for today" boundary: choose a time to stop working and enforce it. Boundaries don\'t reduce output they protect it.',
+    ],
+    cluster: 'Stress & Clarity',
+    contextInsights: [
+      { t: 'danger', msg: '🔴 Chronic overwhelm signals a mismatch between commitments and capacity. Something needs to be removed, not just optimized.' },
+      { t: 'info', msg: '🧘 Feeling overwhelmed is a sign your brain is in "threat mode." Physical movement for 15 minutes resets your nervous system.' },
+      { t: 'success', msg: '💡 You don\'t need to solve everything you need to solve THE RIGHT THING. 80% of your stress comes from 20% of the issues.' },
+    ]
+  },
+  relationship: {
+    steps: [
+      'Write down the specific pattern (not the person): "When X happens, Y reaction follows, causing Z outcome." This creates clarity.',
+      'Pick ONE recurring conflict. Write both perspectives yours AND theirs honestly. Empathy often resolves what arguments don\'t.',
+      'Have a calm, scheduled conversation (not in the heat of conflict): "I\'ve noticed we keep disagreeing on X. Can we talk about why?"',
+      'Focus on needs, not positions. "I need to feel respected (need)" vs "You need to stop doing X (position)."',
+      'If patterns stay stuck after honest effort, consider a neutral third party (mediator/counsellor) it\'s strength, not weakness.',
+    ],
+    cluster: 'Relationships',
+    contextInsights: [
+      { t: 'info', msg: '❤️ Recurring conflicts aren\'t about the issue they\'re about unmet needs or communication styles clashing.' },
+      { t: 'warn', msg: '⚠️ Don\'t have important conversations when either person is tired, hungry, or already stressed.' },
+      { t: 'success', msg: '💬 "I feel X when Y happens" beats "You always/never" in every conversation. The first reflects; the second attacks.' },
+    ]
+  },
+  habit: {
+    steps: [
+      'The real problem is usually friction, not motivation. Make the habit ridiculously easy: 2 minutes, no exceptions.',
+      'Use habit stacking: attach the new habit to one you already do ("After I brush my teeth, I will…").',
+      'Design your environment: make the habit obvious and easy (gym bag by the door, book on pillow, water bottle on desk).',
+      'Track it visually: a simple checkbox calendar on your wall. Don\'t break the chain the streak becomes its own motivation.',
+      'Expect and plan for lapses: missing once is human, missing twice is the start of a new habit (not doing it). Have a "minimum viable version" for hard days.',
+    ],
+    cluster: 'Habit Building',
+    contextInsights: [
+      { t: 'success', msg: '<i data-lucide="check-circle" style="width:18px;height:18px;display:inline-block;vertical-align:middle;"></i> Two minutes is not a joke. It creates identity: "I\'m the kind of person who exercises every day" even if it\'s 10 pushups.' },
+      { t: 'info', msg: '🔍 Most habit failures are design failures, not willpower failures. Change your environment, not yourself.' },
+      { t: 'warn', msg: '⚡ Don\'t combine more than 2 new habits at once. Habit energy is finite. Add the next habit only when the first is automatic (21+ days).' },
+    ]
+  },
+};
+
+function detectCluster(text) {
+  const t = text.toLowerCase();
+  const scores = {
+    career:       (t.match(/\b(job|career|work|salary|offer|company|boss|promotion|role|intern)\b/g) || []).length * 2,
+    study:        (t.match(/\b(study|learn|course|skill|read|practice|exam|book|class|consistent)\b/g) || []).length * 2,
+    money:        (t.match(/\b(money|invest|debt|saving|pay|financial|fund|budget|afford|income)\b/g) || []).length * 2,
+    stress:       (t.match(/\b(stress|overwhelm|anxious|tired|exhaust|burnout|too much|can't focus|pressure)\b/g) || []).length * 2,
+    relationship: (t.match(/\b(relationship|friend|family|partner|conflict|argue|fight|communicate|person)\b/g) || []).length * 2,
+    habit:        (t.match(/\b(habit|routine|track|streak|consistent|discipline|motivation|keep|start|quit)\b/g) || []).length * 2,
+  };
+  return Object.entries(scores).sort((a, b) => b[1] - a[1])[0]?.[0] || 'career';
+}
+
+(async function () {
+  const user = await FS.requireAuth();
+  if (!user) return;
+  FS.initLayout(user, 'nextmove');
+
+  async function loadHistory() {
+    const res  = await FS.api('/api/nextmove/index.php');
+    const cont = document.getElementById('history-container');
+    if (!res.ok || !res.data.history?.length) {
+      cont.innerHTML = `<div class="empty-state"><div class="empty-icon"><i data-lucide="compass" style="width:18px;height:18px;display:inline-block;vertical-align:middle;"></i></div>
+        <h3>No action plans yet</h3>
+        <p>Describe your first situation above. Use the quick buttons to build a starting prompt.</p></div>`;
+      return;
+    }
+    cont.innerHTML = '<div style="display:flex;flex-direction:column;gap:10px">' +
+      res.data.history.map(h => `
+        <div class="card" style="padding:16px">
+          <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px">
+            <span class="badge badge-primary">${FS.escape(h.cluster || 'General')}</span>
+            <span style="font-size:.75rem;color:var(--tx3)">${FS.relDate(h.created_at)}</span>
+          </div>
+          <div style="font-size:.875rem;color:var(--tx2);margin-bottom:10px;font-style:italic">"${FS.escape(h.situation_text.slice(0, 120))}${h.situation_text.length > 120 ? '…' : ''}"</div>
+          <pre style="font-size:.8rem;color:var(--tx);white-space:pre-wrap;font-family:inherit;line-height:1.75;margin:0">${FS.escape(h.generated_advice)}</pre>
+        </div>`).join('') + '</div>';
+  }
+
+  document.getElementById('nm-form').addEventListener('submit', async function (e) {
+    e.preventDefault();
+    const errEl = document.getElementById('nm-error');
+    errEl.style.display = 'none';
+    const situation_text = document.getElementById('situation').value.trim();
+    if (situation_text.length < 20) {
+      errEl.textContent = 'Please describe your situation in at least 20 characters for a meaningful plan.';
+      errEl.style.display = 'flex'; return;
     }
 
-    document.getElementById('nm-form').addEventListener('submit', async function (e) {
-        e.preventDefault();
-        const situation_text = document.getElementById('situation').value.trim();
-        const btn = document.getElementById('btn-submit');
-        btn.disabled = true; btn.textContent = 'Thinking…';
+    const btn = document.getElementById('btn-submit');
+    btn.disabled = true;
+    btn.innerHTML = '<span class="fs-spinner" style="width:14px;height:14px;border-width:2px;margin-right:8px"></span>Generating plan…';
 
-        const res = await FS.api('/api/nextmove/index.php', 'POST', { situation_text });
-        if (res.ok) {
-            const d = res.data;
-            document.getElementById('cluster-tag').textContent = d.cluster.charAt(0).toUpperCase() + d.cluster.slice(1);
-            document.getElementById('advice-list').innerHTML = d.advice.map((a, i) => `
-                <div class="advice-item">
-                    <div class="advice-num">${i+1}</div>
-                    <div>${FS.escape(a)}</div>
-                </div>`).join('');
-            document.getElementById('advice-section').style.display = 'block';
-            document.getElementById('advice-section').scrollIntoView({ behavior: 'smooth', block: 'start' });
-            loadHistory();
-        } else {
-            FS.toast(res.data.error || 'Failed to generate advice', 'danger');
-        }
-        btn.disabled = false; btn.textContent = '▶ Get My Next Move';
+    // Detect cluster client-side
+    const cluster = detectCluster(situation_text);
+    const plan    = ADVICE_DB[cluster] || ADVICE_DB.career;
+
+    // Show result immediately (client-side)
+    document.getElementById('cluster-badge').textContent = plan.cluster;
+    document.getElementById('advice-list').innerHTML = plan.steps.map((step, i) => `
+      <div class="advice-item">
+        <div class="advice-num">${i + 1}</div>
+        <div>${FS.escape(step)}</div>
+      </div>`).join('');
+    Intel.renderInsights(plan.contextInsights, document.getElementById('nm-context-insights'));
+
+    const section = document.getElementById('advice-section');
+    section.style.display = 'block';
+    section.scrollIntoView({ behavior: 'smooth', block: 'start' });
+
+    const advice_text = plan.steps.join('\n');
+
+    // Save to backend
+    await FS.api('/api/nextmove/index.php', 'POST', {
+      situation_text,
+      generated_advice: advice_text.slice(0, 2000),
+      cluster
     });
 
-    await loadHistory();
-    FS.showLoading(false);
-    document.getElementById('fs-app').style.display = 'flex';
+    FS.toast('Action plan generated! Save or revisit it anytime. <i data-lucide="compass" style="width:18px;height:18px;display:inline-block;vertical-align:middle;"></i>', 'success');
+    loadHistory();
+    btn.disabled = false; btn.textContent = '<i data-lucide="compass" style="width:18px;height:18px;display:inline-block;vertical-align:middle;"></i> Get My Action Plan';
+  });
+
+  await loadHistory();
+  FS.showLoading(false);
+  document.getElementById('fs-app').style.display = 'flex';
 })();
 </script>
 </body>

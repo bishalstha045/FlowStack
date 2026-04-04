@@ -1,121 +1,175 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="description" content="FlowStack Dashboard — your personal analytics summary.">
-    <title>Dashboard — FlowStack</title>
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="assets/css/app.css">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="FlowStack Dashboard your intelligent behavioral analytics hub.">
+  <title>Dashboard FlowStack</title>
+  <link rel="stylesheet" href="assets/css/app.css">
+  <link rel="stylesheet" href="assets/css/style.css">
 </head>
 <body>
+<div id="fs-loading"><div class="fs-spinner"></div><span class="loading-text">Analyzing your data…</span></div>
 
-<div id="fs-loading"><div class="fs-spinner"></div></div>
+<div class="fs-app" id="fs-app" style="display:none">
+  <div id="fs-overlay" class="sidebar-overlay"></div>
+  <aside id="fs-sidebar" class="sidebar"></aside>
+  <div class="fs-body">
+    <header id="fs-header" class="header"></header>
+    <main class="main-content">
 
-<div class="fs-app" style="display:none" id="fs-app">
-    <div id="fs-overlay" class="sidebar-overlay"></div>
-    <aside id="fs-sidebar" class="sidebar"></aside>
-    <div class="fs-body">
-        <header id="fs-header" class="header"></header>
-        <main class="main-content">
+      <div class="page-header">
+        <div class="page-header-text">
+          <h1 id="greeting">Good morning </h1>
+          <p>Your behavioral intelligence summary</p>
+        </div>
+        <div class="page-header-actions">
+          <a href="habits.html" class="btn btn-secondary btn-sm"><i data-lucide="check-circle" style="width:18px;height:18px;display:inline-block;vertical-align:middle;"></i> Habits</a>
+          <a href="focus.html"  class="btn btn-primary btn-sm"><i data-lucide="timer" style="width:18px;height:18px;display:inline-block;vertical-align:middle;"></i> Focus</a>
+        </div>
+      </div>
 
-            <div class="page-header">
-                <div>
-                    <h1 id="greeting">Good morning 👋</h1>
-                    <p>Here's your behavioral summary</p>
-                </div>
-                <div style="display:flex;gap:.6rem;flex-wrap:wrap">
-                    <a href="habits.html"  class="btn btn-primary btn-sm">+ Add Habit</a>
-                    <a href="focus.html"   class="btn btn-secondary btn-sm">⏱ Start Focus</a>
-                </div>
-            </div>
+      <!-- FlowScore panel -->
+      <div id="flowscore-panel">
+        <div class="flowscore-panel">
+          <div class="flowscore-left" id="gauge-container"></div>
+          <div class="flowscore-right">
+            <div class="flowscore-tier" id="flow-tier">Calculating…</div>
+            <div class="flowscore-summary" id="flow-summary">Gathering your data…</div>
+            <div class="flowscore-scores" id="flow-scores"></div>
+          </div>
+        </div>
+      </div>
 
-            <!-- Stats grid -->
-            <div class="stats-grid" id="stats-grid">
-                <div class="stat-card"><div class="stat-label">Active Habits</div><div class="stat-value" id="s-habits">—</div><a class="stat-link" href="habits.html">Manage →</a></div>
-                <div class="stat-card"><div class="stat-label">Focus This Week</div><div class="stat-value" id="s-focus">— <span style="font-size:1rem;font-weight:400;color:var(--color-text-muted)">hrs</span></div><a class="stat-link" href="focus.html">View →</a></div>
-                <div class="stat-card"><div class="stat-label">Decision Win Rate</div><div class="stat-value" id="s-rate">—<span style="font-size:1rem">%</span></div><a class="stat-link" href="decisions.html">View →</a></div>
-                <div class="stat-card"><div class="stat-label">Best Streak</div><div class="stat-value" id="s-streak">— <span style="font-size:1rem;font-weight:400;color:var(--color-text-muted)">days</span></div><a class="stat-link" href="habits.html">View →</a></div>
-            </div>
+      <!-- Stats -->
+      <div class="stats-grid" style="margin-bottom:20px">
+        <div class="stat-card">
+          <div class="stat-card-top"><div class="stat-icon indigo"><i data-lucide="check-circle" style="width:18px;height:18px;display:inline-block;vertical-align:middle;"></i></div></div>
+          <div class="stat-value" id="s-habits"></div>
+          <div class="stat-label">Active Habits</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-card-top"><div class="stat-icon green"><i data-lucide="timer" style="width:18px;height:18px;display:inline-block;vertical-align:middle;"></i></div></div>
+          <div class="stat-value" id="s-focus"></div>
+          <div class="stat-label">Focus Hrs (7 days)</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-card-top"><div class="stat-icon amber"><i data-lucide="target" style="width:18px;height:18px;display:inline-block;vertical-align:middle;"></i></div></div>
+          <div class="stat-value" id="s-rate"></div>
+          <div class="stat-label">Decision Win Rate</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-card-top"><div class="stat-icon red"><i data-lucide="flame" style="width:18px;height:18px;display:inline-block;vertical-align:middle;"></i></div></div>
+          <div class="stat-value" id="s-streak"></div>
+          <div class="stat-label">Best Streak</div>
+        </div>
+      </div>
 
-            <div style="display:grid;grid-template-columns:1fr 1fr;gap:1.25rem">
+      <!-- Key insights + quick habits -->
+      <div class="grid-2" style="margin-bottom:16px">
+        <div class="card">
+          <div class="card-title"><span><i data-lucide="brain" style="width:18px;height:18px;display:inline-block;vertical-align:middle;"></i> AI Insights</span></div>
+          <div id="insights-list"><div class="skeleton" style="height:100px"></div></div>
+        </div>
+        <div class="card">
+          <div class="card-title"><span>Today's Habits</span><a href="habits.html">View all →</a></div>
+          <div id="habits-preview"></div>
+        </div>
+      </div>
 
-                <!-- Top habits -->
-                <div class="card">
-                    <div class="section-title"><span>Top Habits by Streak</span><a href="habits.html" style="font-size:.8rem;color:var(--color-primary)">View all</a></div>
-                    <div id="habits-list"><p style="color:var(--color-text-muted);font-size:.875rem">Loading…</p></div>
-                </div>
+      <!-- Quick access -->
+      <div class="card">
+        <div class="card-title"><span>Quick Access</span></div>
+        <div class="quick-grid">
+          <a href="habits.html"      class="quick-btn"><i data-lucide="check-circle" style="width:18px;height:18px;display:inline-block;vertical-align:middle;"></i> HabitSync</a>
+          <a href="focus.html"       class="quick-btn"><i data-lucide="timer" style="width:18px;height:18px;display:inline-block;vertical-align:middle;"></i> Focus Timer</a>
+          <a href="decisions.html"   class="quick-btn"><i data-lucide="git-merge" style="width:18px;height:18px;display:inline-block;vertical-align:middle;"></i> DecisionLog</a>
+          <a href="skills.html"      class="quick-btn"><i data-lucide="award" style="width:18px;height:18px;display:inline-block;vertical-align:middle;"></i> Skills</a>
+          <a href="pathcompare.html" class="quick-btn"><i data-lucide="scale" style="width:18px;height:18px;display:inline-block;vertical-align:middle;"></i> Path Compare</a>
+          <a href="nextmove.html"    class="quick-btn"><i data-lucide="compass" style="width:18px;height:18px;display:inline-block;vertical-align:middle;"></i> Next Move</a>
+          <a href="analytics.html"   class="quick-btn"><i data-lucide="bar-chart" style="width:18px;height:18px;display:inline-block;vertical-align:middle;"></i> Analytics</a>
+        </div>
+      </div>
 
-                <!-- Insights -->
-                <div class="card">
-                    <div class="section-title"><span>Today's Insights</span></div>
-                    <div id="insights-list" class="insights-list"><p style="color:var(--color-text-muted);font-size:.875rem">Loading…</p></div>
-                </div>
-
-            </div>
-
-            <!-- Quick access -->
-            <div class="card" style="margin-top:1.25rem">
-                <div class="section-title"><span>Quick Access</span></div>
-                <div class="quick-access">
-                    <a href="habits.html"     class="quick-btn">✅ HabitSync</a>
-                    <a href="focus.html"      class="quick-btn">⏱ Focus Tracker</a>
-                    <a href="decisions.html"  class="quick-btn">◆ DecisionLog</a>
-                    <a href="skills.html"     class="quick-btn">⭐ Skills</a>
-                    <a href="pathcompare.html"class="quick-btn">⚖ Path Compare</a>
-                    <a href="nextmove.html"   class="quick-btn">▶ Next Move</a>
-                    <a href="analytics.html"  class="quick-btn">📊 Analytics</a>
-                </div>
-            </div>
-
-        </main>
-    </div>
+    </main>
+  </div>
 </div>
 
 <script src="assets/js/app.js"></script>
+<script src="assets/js/intelligence.js"></script>
 <script>
 (async function () {
-    const user = await FS.requireAuth();
-    if (!user) return;
-    FS.initLayout(user, 'dashboard');
+  const user = await FS.requireAuth();
+  if (!user) return;
+  FS.initLayout(user, 'dashboard');
 
-    // Greeting by time
-    const hr = new Date().getHours();
-    const gr = hr < 12 ? 'Good morning' : hr < 17 ? 'Good afternoon' : 'Good evening';
-    document.getElementById('greeting').textContent = gr + ', ' + user.name.split(' ')[0] + ' 👋';
+  const hr = new Date().getHours();
+  document.getElementById('greeting').textContent =
+    (hr < 12 ? 'Good morning' : hr < 17 ? 'Good afternoon' : 'Good evening') +
+    ', ' + user.name.split(' ')[0] + ' ';
 
-    const res = await FS.api('/api/dashboard/index.php');
-    if (res.ok) {
-        const d = res.data;
-        document.getElementById('s-habits').textContent = d.active_habits;
-        document.getElementById('s-focus').innerHTML    = d.focus_hours + ' <span style="font-size:1rem;font-weight:400;color:var(--color-text-muted)">hrs</span>';
-        document.getElementById('s-rate').innerHTML     = d.decision_rate + '<span style="font-size:1rem">%</span>';
-        document.getElementById('s-streak').innerHTML   = d.best_streak + ' <span style="font-size:1rem;font-weight:400;color:var(--color-text-muted)">days</span>';
+  // Fetch all data in parallel
+  const [dashRes, habitsRes, focusRes] = await Promise.all([
+    FS.api('/api/dashboard/index.php'),
+    FS.api('/api/habits/index.php'),
+    FS.api('/api/focus/index.php'),
+  ]);
 
-        const hlist = document.getElementById('habits-list');
-        if (d.habits && d.habits.length > 0) {
-            hlist.innerHTML = '<div class="habit-list">' + d.habits.map(h => `
-                <div class="habit-item" style="padding:.65rem 1rem">
-                    <div class="habit-info">
-                        <div class="habit-name">${FS.escape(h.name)}</div>
-                        <div class="habit-meta"><span class="streak">🔥 ${h.streak} day streak</span></div>
-                    </div>
-                </div>`).join('') + '</div>';
-        } else {
-            hlist.innerHTML = '<p style="color:var(--color-text-muted);font-size:.875rem">No habits yet. <a href="habits.html" style="color:var(--color-primary)">Add your first →</a></p>';
-        }
+  // Stats
+  if (dashRes.ok) {
+    const d = dashRes.data;
+    document.getElementById('s-habits').textContent  = d.active_habits;
+    document.getElementById('s-focus').innerHTML     = d.focus_hours + '<span> hrs</span>';
+    document.getElementById('s-rate').innerHTML      = d.decision_rate + '<span>%</span>';
+    document.getElementById('s-streak').textContent  = d.best_streak;
+  }
 
-        const ilist = document.getElementById('insights-list');
-        if (d.insights && d.insights.length > 0) {
-            ilist.innerHTML = d.insights.map(i => `<div class="insight-item"><span class="insight-dot"></span><span>${FS.escape(i)}</span></div>`).join('');
-        } else {
-            ilist.innerHTML = '<p style="color:var(--color-text-muted);font-size:.875rem">Keep tracking to unlock behavioral insights.</p>';
-        }
-    }
+  // Intelligence
+  const habits    = habitsRes.ok  ? habitsRes.data.habits   || [] : [];
+  const sessions  = focusRes.ok   ? focusRes.data.sessions  || [] : [];
+  const focusStat = focusRes.ok   ? focusRes.data            : {};
+  const dashStats = dashRes.ok    ? dashRes.data              : {};
 
-    FS.showLoading(false);
-    document.getElementById('fs-app').style.display = 'flex';
+  // Run analysis
+  const habitResult    = Intel.habits(habits);
+  const focusResult    = Intel.focus(sessions, focusStat);
+  const decisionResult = dashStats.total_decisions >= 2
+    ? Intel.decisions([], { rate: dashStats.decision_rate, total: dashStats.total_decisions })
+    : null;
+
+  // FlowScore
+  const synthesis = Intel.synthesize(habitResult, focusResult, decisionResult, null);
+  Intel.renderScoreGauge(synthesis.flowScore, '/100', document.getElementById('gauge-container'));
+  document.getElementById('flow-tier').textContent    = synthesis.tier + ' Level';
+  document.getElementById('flow-summary').textContent = synthesis.summary;
+  document.getElementById('flow-scores').innerHTML    = synthesis.scores.map(s =>
+    `<div class="module-score">${s.icon} ${s.label}<span>${s.score}</span></div>`).join('');
+
+  // Smart insights (combine habit + focus insights, top 4)
+  const allInsights = [...(habitResult?.insights || []), ...(focusResult?.insights || [])].slice(0, 4);
+  Intel.renderInsights(allInsights, document.getElementById('insights-list'));
+
+  // Habits preview
+  const hp = document.getElementById('habits-preview');
+  if (habits.length) {
+    hp.innerHTML = '<div class="habit-list">' + habits.slice(0, 4).map(h => `
+      <div class="habit-item" style="padding:10px 14px">
+        <div class="habit-check ${h.done_today ? 'done' : ''}">${h.done_today ? '✓' : ''}</div>
+        <div class="habit-info">
+          <div class="habit-name">${FS.escape(h.name)}</div>
+          <div class="habit-meta"><span class="streak"><i data-lucide="flame" style="width:18px;height:18px;display:inline-block;vertical-align:middle;"></i> ${h.streak} day streak</span><span>${h.pct_week}% this week</span></div>
+        </div>
+      </div>`).join('') + '</div>';
+  } else {
+    hp.innerHTML = `<div class="empty-state" style="padding:20px">
+      <div class="empty-icon"><i data-lucide="check-circle" style="width:18px;height:18px;display:inline-block;vertical-align:middle;"></i></div>
+      <h3>No habits yet</h3>
+      <a href="habits.html" class="btn btn-primary btn-sm" style="margin-top:8px">Add First Habit</a>
+    </div>`;
+  }
+
+  FS.showLoading(false);
+  document.getElementById('fs-app').style.display = 'flex';
 })();
 </script>
 </body>

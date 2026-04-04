@@ -14,10 +14,10 @@ if (session_status() === PHP_SESSION_NONE) {
     ]);
 }
 
-define('DB_HOST',    'localhost');
-define('DB_NAME',    'flowstack');
-define('DB_USER',    'root');
-define('DB_PASS',    '');
+define('DB_HOST',    'sql107.infinityfree.com');
+define('DB_NAME',    'if0_41579372_flowstack');
+define('DB_USER',    'if0_41579372');
+define('DB_PASS',    'lJkHcqxsqr');
 define('DB_CHARSET', 'utf8mb4');
 
 function getPDO(): PDO

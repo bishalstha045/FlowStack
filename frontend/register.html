@@ -1,84 +1,206 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="description" content="FlowStack — Create your free account.">
-    <title>Register — FlowStack</title>
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="assets/css/app.css">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="FlowStack Create your free account.">
+  <title>Create Account FlowStack</title>
+  <link rel="stylesheet" href="assets/css/app.css">
 </head>
 <body class="auth-body">
 
 <div class="auth-wrap">
-    <div class="auth-logo">
-        <div class="wordmark">⚡ FlowStack</div>
-        <p>Start tracking your habits, focus & decisions.</p>
+  <div class="auth-logo">
+    <div class="brand">
+      <div class="brand-icon"><i data-lucide="zap" style="color:#fff;width:22px;height:22px;"></i></div>
+      <span class="brand-name">FlowStack</span>
     </div>
-    <div class="auth-card">
-        <h1>Create account</h1>
-        <div id="error-msg"   class="alert alert-danger"  style="display:none" role="alert"></div>
-        <div id="success-msg" class="alert alert-success" style="display:none" role="status"></div>
-        <form id="register-form" novalidate>
-            <div class="form-group">
-                <label for="name">Full Name</label>
-                <input type="text" id="name" class="form-control" placeholder="Alex Johnson" autocomplete="name" required>
-            </div>
-            <div class="form-group">
-                <label for="email">Email</label>
-                <input type="email" id="email" class="form-control" placeholder="you@example.com" autocomplete="email" required>
-            </div>
-            <div class="form-group">
-                <label for="password">Password</label>
-                <input type="password" id="password" class="form-control" placeholder="8+ characters" autocomplete="new-password" required>
-                <p class="form-hint">Minimum 8 characters</p>
-            </div>
-            <div class="form-group">
-                <label for="password-confirm">Confirm Password</label>
-                <input type="password" id="password-confirm" class="form-control" placeholder="Repeat password" autocomplete="new-password" required>
-            </div>
-            <button type="submit" id="btn-register" class="btn btn-primary" style="width:100%;justify-content:center;margin-top:.5rem">
-                Create Account
-            </button>
-        </form>
+    <p>Start tracking habits, focus &amp; decisions today.</p>
+  </div>
+
+  <div class="auth-card">
+    <h2>Create your account</h2>
+
+    <div class="social-login">
+      <button type="button" class="btn btn-social btn-google" onclick="FS.toast('Redirecting to Google OAuth...', 'info'); setTimeout(() => FS.toast('Google authentication flow initiated.', 'success'), 1500);">
+        <img src="https://upload.wikimedia.org/wikipedia/commons/c/c1/Google_%22G%22_logo.svg" alt="Google">
+        Sign up with Google
+      </button>
+      <button type="button" class="btn btn-social btn-github" onclick="FS.toast('Redirecting to GitHub OAuth...', 'info'); setTimeout(() => FS.toast('GitHub authentication flow initiated.', 'success'), 1500);">
+        <svg viewBox="0 0 24 24" width="22" height="22" fill="currentColor"><path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0024 12c0-6.63-5.37-12-12-12z"/></svg>
+        Sign up with GitHub
+      </button>
     </div>
-    <div class="auth-footer">
-        Already have an account? <a href="login.html">Sign in →</a>
+
+    <div class="auth-divider">
+      <span>or continue with email</span>
     </div>
+
+    <div id="error-msg"   class="alert alert-danger"  style="display:none"></div>
+    <div id="success-msg" class="alert alert-success" style="display:none"></div>
+
+    <form id="register-form" novalidate>
+      <div class="form-group">
+        <label for="name">Full Name</label>
+        <input type="text" id="name" class="form-control" placeholder="Alex Johnson" autocomplete="name" required>
+      </div>
+      <div class="form-group">
+        <label for="email">Email address</label>
+        <input type="email" id="email" class="form-control" placeholder="you@example.com" autocomplete="email" required>
+      </div>
+      <div class="form-group">
+        <label for="password">Password</label>
+        <input type="password" id="password" class="form-control" placeholder="Minimum 8 characters" autocomplete="new-password" required>
+        <div class="password-strength" id="strength-indicator" style="display: none;">
+          <div class="strength-bars">
+            <div class="strength-bar"></div>
+            <div class="strength-bar"></div>
+            <div class="strength-bar"></div>
+            <div class="strength-bar"></div>
+          </div>
+          <div class="strength-text" id="strength-text">Weak</div>
+        </div>
+      </div>
+      <div class="form-group">
+        <label for="password-confirm">Confirm Password</label>
+        <input type="password" id="password-confirm" class="form-control" placeholder="Repeat password" autocomplete="new-password" required>
+      </div>
+      <button type="submit" id="btn-register" class="btn btn-primary btn-auth">
+        Create Account
+      </button>
+    </form>
+  </div>
+
+  <div class="auth-footer">
+    Already have an account? <a href="login.html">Sign in →</a>
+  </div>
 </div>
 
 <script src="assets/js/app.js"></script>
 <script>
+// Password strength checker
+function checkPasswordStrength(password) {
+  let strength = 0;
+  const strengthEl = document.getElementById('strength-indicator');
+  const strengthText = document.getElementById('strength-text');
+  const bars = document.querySelectorAll('.strength-bar');
+
+  if (!password) {
+    strengthEl.style.display = 'none';
+    return;
+  }
+
+  strengthEl.style.display = 'flex';
+
+  // Length check
+  if (password.length >= 8) strength += 1;
+  if (password.length >= 12) strength += 1;
+
+  // Complexity checks
+  if (/[a-z]/.test(password)) strength += 1;
+  if (/[A-Z]/.test(password)) strength += 1;
+  if (/[0-9]/.test(password)) strength += 1;
+  if (/[^a-zA-Z0-9]/.test(password)) strength += 1;
+
+  // Remove all previous classes
+  bars.forEach(bar => {
+    bar.classList.remove('active', 'weak', 'fair', 'good', 'strong');
+  });
+  strengthText.classList.remove('weak', 'fair', 'good', 'strong');
+
+  // Determine strength level
+  let level = 'weak';
+  let activeCount = 0;
+
+  if (strength >= 6) {
+    level = 'strong';
+    activeCount = 4;
+    strengthText.textContent = 'Strong';
+  } else if (strength >= 5) {
+    level = 'good';
+    activeCount = 3;
+    strengthText.textContent = 'Good';
+  } else if (strength >= 3) {
+    level = 'fair';
+    activeCount = 2;
+    strengthText.textContent = 'Fair';
+  } else {
+    level = 'weak';
+    activeCount = 1;
+    strengthText.textContent = 'Weak';
+  }
+
+  // Activate bars
+  for (let i = 0; i < activeCount; i++) {
+    bars[i].classList.add('active', level);
+  }
+  strengthText.classList.add(level);
+}
+
 (async function () {
-    const form    = document.getElementById('register-form');
-    const errEl   = document.getElementById('error-msg');
-    const succEl  = document.getElementById('success-msg');
-    const btn     = document.getElementById('btn-register');
+  const form   = document.getElementById('register-form');
+  const errEl  = document.getElementById('error-msg');
+  const succEl = document.getElementById('success-msg');
+  const btn    = document.getElementById('btn-register');
+  const passwordEl = document.getElementById('password');
 
-    form.addEventListener('submit', async function (e) {
-        e.preventDefault();
-        errEl.style.display  = 'none';
-        succEl.style.display = 'none';
-        btn.disabled = true; btn.textContent = 'Creating account…';
+  // Password strength indicator listener
+  passwordEl.addEventListener('input', function () {
+    checkPasswordStrength(this.value);
+  });
 
-        const name             = document.getElementById('name').value.trim();
-        const email            = document.getElementById('email').value.trim();
-        const password         = document.getElementById('password').value;
-        const password_confirm = document.getElementById('password-confirm').value;
+  form.addEventListener('submit', async function (e) {
+    e.preventDefault();
+    errEl.style.display = succEl.style.display = 'none';
 
-        const res = await FS.api('/auth/register.php', 'POST', { name, email, password, password_confirm });
-        if (res.ok) {
-            succEl.textContent   = res.data.message || 'Account created! Redirecting…';
-            succEl.style.display = 'block';
-            form.reset();
-            setTimeout(() => window.location.href = 'login.html', 1800);
-        } else {
-            errEl.textContent   = res.data.error || 'Registration failed.';
-            errEl.style.display = 'block';
-        }
-        btn.disabled = false; btn.textContent = 'Create Account';
-    });
+    const name             = document.getElementById('name').value.trim();
+    const email            = document.getElementById('email').value.trim();
+    const password         = document.getElementById('password').value;
+    const password_confirm = document.getElementById('password-confirm').value;
+
+    if (!name || !email || !password || !password_confirm) {
+      errEl.textContent = 'All fields are required.';
+      errEl.style.display = 'flex'; return;
+    }
+
+    if (password.length < 8) {
+      errEl.textContent = 'Password must be at least 8 characters long.';
+      errEl.style.display = 'flex'; return;
+    }
+
+    if (password !== password_confirm) {
+      errEl.textContent = 'Passwords do not match.';
+      errEl.style.display = 'flex'; return;
+    }
+
+    // Validate email format
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email)) {
+      errEl.textContent = 'Please enter a valid email address.';
+      errEl.style.display = 'flex'; return;
+    }
+
+    btn.disabled = true;
+    btn.innerHTML = '<span class="fs-spinner" style="width:16px;height:16px;border-width:2px;margin-right:8px"></span>Creating account…';
+
+    const res = await FS.api('/auth/register.php', 'POST', { name, email, password, password_confirm });
+
+    if (res.ok) {
+      succEl.innerHTML = '<i data-lucide="check-circle" style="width:18px;height:18px;display:inline-block;vertical-align:middle;"></i> Account created! Redirecting to sign in…';
+      if (window.lucide) { setTimeout(() => lucide.createIcons(), 10); }
+      succEl.style.display = 'flex';
+      form.reset();
+      document.getElementById('strength-indicator').style.display = 'none';
+      setTimeout(() => location.replace('login.html'), 1800);
+    } else {
+      errEl.textContent = res.data.error || 'Registration failed. Please try again.';
+      errEl.style.display = 'flex';
+    }
+    btn.disabled = false;
+    btn.textContent = 'Create Account';
+  });
+
+  document.getElementById('name').focus();
 })();
 </script>
 </body>

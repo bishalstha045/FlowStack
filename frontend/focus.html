@@ -1,129 +1,227 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="description" content="Focus Tracker — Log deep work sessions on FlowStack.">
-    <title>Focus Tracker — FlowStack</title>
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="assets/css/app.css">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="Focus Tracker Measure deep work and get productivity insights.">
+  <title>Focus Tracker FlowStack</title>
+  <link rel="stylesheet" href="assets/css/app.css">
+  <link rel="stylesheet" href="assets/css/style.css">
 </head>
 <body>
-<div id="fs-loading"><div class="fs-spinner"></div></div>
-<div class="fs-app" style="display:none" id="fs-app">
-    <div id="fs-overlay" class="sidebar-overlay"></div>
-    <aside id="fs-sidebar" class="sidebar"></aside>
-    <div class="fs-body">
-        <header id="fs-header" class="header"></header>
-        <main class="main-content">
+<div id="fs-loading"><div class="fs-spinner"></div><span class="loading-text">Loading focus data…</span></div>
 
-            <div class="page-header">
-                <div><h1>Focus Tracker</h1><p>Deep work sessions quality over quantity</p></div>
+<div class="fs-app" id="fs-app" style="display:none">
+  <div id="fs-overlay" class="sidebar-overlay"></div>
+  <aside id="fs-sidebar" class="sidebar"></aside>
+  <div class="fs-body">
+    <header id="fs-header" class="header"></header>
+    <main class="main-content">
+
+      <div class="page-header">
+        <div class="page-header-text">
+          <h1>Focus Tracker</h1>
+          <p>Track deep work sessions and get intelligent productivity analysis</p>
+        </div>
+      </div>
+
+      <!-- Productivity score + metrics -->
+      <div class="prod-score-card" id="prod-card" style="display:none">
+        <div id="focus-gauge"></div>
+        <div class="prod-score-right">
+          <div class="prod-score-title">PRODUCTIVITY SCORE</div>
+          <div class="prod-score-val" id="ps-val"></div>
+          <div class="prod-score-sub" id="ps-sub"></div>
+          <div class="prod-metric-row">
+            <div class="prod-metric">
+              <div class="val" id="pm-avg"></div>
+              <div class="lbl">Avg Session</div>
             </div>
-
-            <div class="stats-grid" style="grid-template-columns:repeat(3,1fr);margin-bottom:1.5rem">
-                <div class="stat-card"><div class="stat-label">Today's Focus</div><div class="stat-value" id="stat-today">— <span style="font-size:1.1rem;font-weight:400;color:var(--color-text-muted)">min</span></div></div>
-                <div class="stat-card"><div class="stat-label">Avg Session</div><div class="stat-value" id="stat-avg">— <span style="font-size:1.1rem;font-weight:400;color:var(--color-text-muted)">min</span></div></div>
-                <div class="stat-card"><div class="stat-label">This Week</div><div class="stat-value" id="stat-week">— <span style="font-size:1.1rem;font-weight:400;color:var(--color-text-muted)">hrs</span></div></div>
+            <div class="prod-metric">
+              <div class="val" id="pm-deep"></div>
+              <div class="lbl">Deep Work</div>
             </div>
-
-            <div class="card" style="max-width:480px;margin:0 auto 2rem">
-                <div class="timer-display" id="timer-display" aria-live="polite" aria-atomic="true">00:00</div>
-                <div class="timer-label" id="timer-label">Ready to focus</div>
-                <div class="timer-actions">
-                    <button class="btn btn-primary btn-lg" id="btn-start" onclick="startTimer()">Start Session</button>
-                    <button class="btn btn-danger btn-lg"  id="btn-stop"    style="display:none" onclick="stopTimer()">Stop &amp; Save</button>
-                    <button class="btn btn-secondary btn-lg" id="btn-discard" style="display:none" onclick="discardTimer()">Discard</button>
-                </div>
+            <div class="prod-metric">
+              <div class="val" id="pm-week"></div>
+              <div class="lbl">Week Hours</div>
             </div>
-
-            <div class="section-title"><span>Recent Sessions</span></div>
-            <div id="sessions-container">
-                <div class="empty-state">
-                    <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
-                    <h3>No sessions yet</h3>
-                    <p>Start a focus session above to track your deep work time.</p>
-                </div>
+            <div class="prod-metric">
+              <div class="val" id="pm-trend"></div>
+              <div class="lbl">Trend</div>
             </div>
+          </div>
+        </div>
+      </div>
 
-        </main>
-    </div>
+      <!-- Intelligence insights -->
+      <div class="intel-panel" id="focus-intel-panel" style="display:none">
+        <div class="intel-header">
+          <h2><i data-lucide="brain" style="width:18px;height:18px;display:inline-block;vertical-align:middle;"></i> Focus Intelligence</h2>
+          <span class="intel-badge" id="focus-badge"></span>
+        </div>
+        <div id="focus-insights"></div>
+      </div>
+
+      <!-- Timer -->
+      <div class="card timer-card">
+        <div class="timer-display" id="timer-display">00:00</div>
+        <div class="timer-progress"><div class="timer-progress-bar" id="timer-bar"></div></div>
+        <div class="timer-status" id="timer-status">Ready start a deep work session</div>
+        <div class="timer-actions" id="timer-actions">
+          <button class="btn btn-primary btn-lg" onclick="startTimer()"><i data-lucide="compass" style="width:18px;height:18px;display:inline-block;vertical-align:middle;"></i> Start Session</button>
+        </div>
+      </div>
+
+      <!-- Stats row -->
+      <div class="stats-grid" style="grid-template-columns:repeat(3,1fr);margin-bottom:20px">
+        <div class="stat-card">
+          <div class="stat-card-top"><div class="stat-icon green">☀️</div></div>
+          <div class="stat-value" id="stat-today"></div>
+          <div class="stat-label">Today (min)</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-card-top"><div class="stat-icon indigo">📅</div></div>
+          <div class="stat-value" id="stat-week"></div>
+          <div class="stat-label">This Week (hrs)</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-card-top"><div class="stat-icon amber"><i data-lucide="bar-chart" style="width:18px;height:18px;display:inline-block;vertical-align:middle;"></i></div></div>
+          <div class="stat-value" id="stat-avg"></div>
+          <div class="stat-label">Avg Session (min)</div>
+        </div>
+      </div>
+
+      <!-- Sessions table -->
+      <div class="section-title"><span>Recent Sessions</span></div>
+      <div id="sessions-container"></div>
+
+    </main>
+  </div>
 </div>
 
 <script src="assets/js/app.js"></script>
+<script src="assets/js/intelligence.js"></script>
 <script>
 (async function () {
-    const user = await FS.requireAuth();
-    if (!user) return;
-    FS.initLayout(user, 'focus');
+  const user = await FS.requireAuth();
+  if (!user) return;
+  FS.initLayout(user, 'focus');
 
-    let timerInterval = null, elapsedSecs = 0, running = false;
-    const display    = document.getElementById('timer-display');
-    const label      = document.getElementById('timer-label');
-    const btnStart   = document.getElementById('btn-start');
-    const btnStop    = document.getElementById('btn-stop');
-    const btnDiscard = document.getElementById('btn-discard');
+  let interval = null, elapsed = 0, running = false;
+  const display = document.getElementById('timer-display');
+  const status  = document.getElementById('timer-status');
+  const bar     = document.getElementById('timer-bar');
+  const actions = document.getElementById('timer-actions');
 
-    function fmt(s) { return String(Math.floor(s/60)).padStart(2,'0') + ':' + String(s%60).padStart(2,'0'); }
+  const pad = n => String(n).padStart(2, '0');
+  const fmt = s => pad(Math.floor(s/60)) + ':' + pad(s % 60);
 
-    window.startTimer = function () {
-        if (running) return;
-        running = true; elapsedSecs = 0;
-        display.textContent = '00:00'; label.textContent = 'Session in progress…';
-        btnStart.style.display = 'none'; btnStop.style.display = 'inline-flex'; btnDiscard.style.display = 'inline-flex';
-        timerInterval = setInterval(() => { elapsedSecs++; display.textContent = fmt(elapsedSecs); }, 1000);
-    };
+  window.startTimer = function () {
+    if (running) return;
+    running = true; elapsed = 0;
+    display.textContent = '00:00';
+    status.textContent  = '<i data-lucide="target" style="width:18px;height:18px;display:inline-block;vertical-align:middle;"></i> In the zone stay focused!';
+    bar.style.width = '0%';
+    actions.innerHTML = `
+      <button class="btn btn-success btn-lg" onclick="stopTimer()">✓ Save Session</button>
+      <button class="btn btn-ghost btn-lg"   onclick="discardTimer()">✕ Discard</button>`;
+    interval = setInterval(() => {
+      elapsed++;
+      display.textContent = fmt(elapsed);
+      bar.style.width = Math.min((elapsed / 1500) * 100, 100) + '%'; // 25-min Pomodoro = 100%
+      // Phase labels
+      if (elapsed === 300)  status.textContent = '5 min warm-up done. Distractions should fade now.';
+      if (elapsed === 900)  status.textContent = '15 min entering flow state territory.';
+      if (elapsed === 1500) status.textContent = '🍅 25 min Pomodoro complete! Consider saving or extending.';
+      if (elapsed === 2700) status.textContent = '45 min deep work achieved. <i data-lucide="brain" style="width:18px;height:18px;display:inline-block;vertical-align:middle;"></i>';
+    }, 1000);
+  };
 
-    window.stopTimer = async function () {
-        if (!running) return;
-        clearInterval(timerInterval); running = false;
-        const mins = Math.max(1, Math.round(elapsedSecs / 60));
-        label.textContent = 'Saving…';
-        const res = await FS.api('/api/focus/index.php', 'POST', { duration_minutes: mins });
-        if (res.ok) { FS.toast('Session saved! ' + mins + ' min focused 🎯', 'success'); loadStats(); }
-        else FS.toast(res.data.error || 'Save failed', 'danger');
-        resetTimer();
-    };
+  window.stopTimer = async function () {
+    if (!running) return;
+    clearInterval(interval); running = false;
+    const mins = Math.max(1, Math.round(elapsed / 60));
+    status.textContent = '💾 Saving…';
+    actions.innerHTML  = '';
+    const res = await FS.api('/api/focus/index.php', 'POST', { duration_minutes: mins });
+    if (res.ok) {
+      const type = mins >= 45 ? '<i data-lucide="brain" style="width:18px;height:18px;display:inline-block;vertical-align:middle;"></i> Deep work' : mins >= 25 ? '🍅 Pomodoro' : '⚡ Quick burst';
+      FS.toast(`${type} saved! ${mins} min ${Math.round(mins * 16.67)} calories equivalent focus. <i data-lucide="target" style="width:18px;height:18px;display:inline-block;vertical-align:middle;"></i>`, 'success');
+      loadStats();
+    } else FS.toast(res.data.error || 'Save failed', 'danger');
+    resetTimer();
+  };
 
-    window.discardTimer = function () {
-        clearInterval(timerInterval); running = false; resetTimer();
-        FS.toast('Session discarded', 'danger');
-    };
+  window.discardTimer = function () {
+    clearInterval(interval); running = false;
+    FS.toast('Session discarded.', 'danger');
+    resetTimer();
+  };
 
-    function resetTimer() {
-        elapsedSecs = 0; display.textContent = '00:00'; label.textContent = 'Ready to focus';
-        btnStart.style.display = 'inline-flex'; btnStop.style.display = 'none'; btnDiscard.style.display = 'none';
+  function resetTimer() {
+    elapsed = 0;
+    display.textContent = '00:00';
+    status.textContent  = 'Ready start a deep work session';
+    bar.style.width = '0%';
+    actions.innerHTML = `<button class="btn btn-primary btn-lg" onclick="startTimer()"><i data-lucide="compass" style="width:18px;height:18px;display:inline-block;vertical-align:middle;"></i> Start Session</button>`;
+  }
+
+  async function loadStats() {
+    const res = await FS.api('/api/focus/index.php');
+    if (!res.ok) return;
+    const d = res.data;
+
+    document.getElementById('stat-today').textContent = d.today_minutes;
+    document.getElementById('stat-week').textContent  = d.week_hours;
+    document.getElementById('stat-avg').textContent   = d.avg_minutes;
+
+    // Intelligence
+    const intel = Intel.focus(d.sessions || [], d);
+    if (intel && d.sessions?.length) {
+      document.getElementById('prod-card').style.display = 'flex';
+      Intel.renderScoreGauge(intel.productivityScore, 'Score', document.getElementById('focus-gauge'));
+      document.getElementById('ps-val').textContent = intel.productivityScore + '/100';
+      const tier = intel.productivityScore >= 80 ? 'Elite' : intel.productivityScore >= 60 ? 'Strong' : intel.productivityScore >= 40 ? 'Building' : 'Low';
+      document.getElementById('ps-sub').textContent  = tier + ' Productivity';
+      document.getElementById('pm-avg').textContent  = intel.metrics.avgMins + ' min';
+      document.getElementById('pm-deep').textContent = intel.metrics.deepWork + ' deep';
+      document.getElementById('pm-week').textContent = intel.metrics.weekHrs + ' hrs';
+      const trendEl = document.getElementById('pm-trend');
+      trendEl.className = 'val ' + (intel.metrics.trend === 'improving' ? 'trend-up' : intel.metrics.trend === 'declining' ? 'trend-down' : 'trend-flat');
+      trendEl.textContent = intel.metrics.trend === 'improving' ? '↑ Up' : intel.metrics.trend === 'declining' ? '↓ Down' : '→ Stable';
+
+      document.getElementById('focus-intel-panel').style.display = 'block';
+      const badge = document.getElementById('focus-badge');
+      badge.textContent = intel.productivityScore >= 60 ? 'High Performance' : intel.productivityScore >= 40 ? 'On Track' : 'Needs Boost';
+      badge.className   = 'intel-badge badge-' + (intel.productivityScore >= 60 ? 'success' : intel.productivityScore >= 40 ? 'warn' : 'danger');
+      Intel.renderInsights(intel.insights, document.getElementById('focus-insights'));
     }
 
-    async function loadStats() {
-        const res = await FS.api('/api/focus/index.php');
-        if (!res.ok) return;
-        const d = res.data;
-        document.getElementById('stat-today').innerHTML = d.today_minutes + ' <span style="font-size:1.1rem;font-weight:400;color:var(--color-text-muted)">min</span>';
-        document.getElementById('stat-avg').innerHTML   = d.avg_minutes   + ' <span style="font-size:1.1rem;font-weight:400;color:var(--color-text-muted)">min</span>';
-        document.getElementById('stat-week').innerHTML  = d.week_hours    + ' <span style="font-size:1.1rem;font-weight:400;color:var(--color-text-muted)">hrs</span>';
-
-        const sessions = d.sessions || [];
-        const cont = document.getElementById('sessions-container');
-        if (sessions.length === 0) {
-            cont.innerHTML = `<div class="empty-state"><svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg><h3>No sessions yet</h3><p>Start a focus session above.</p></div>`;
-            return;
-        }
-        const todMap = { morning:'🌅',afternoon:'☀️',evening:'🌆',night:'🌙' };
-        cont.innerHTML = `<div class="table-wrap"><table>
-            <thead><tr><th>Date</th><th>Duration</th><th>Time of Day</th></tr></thead>
-            <tbody>${sessions.map(s => `<tr>
-                <td>${FS.relDate(s.session_date)}</td>
-                <td><strong>${s.duration_minutes}</strong> min</td>
-                <td>${todMap[s.time_of_day]||''} ${s.time_of_day.charAt(0).toUpperCase()+s.time_of_day.slice(1)}</td>
-            </tr>`).join('')}</tbody>
-        </table></div>`;
+    // Sessions table
+    const cont = document.getElementById('sessions-container');
+    if (!d.sessions?.length) {
+      cont.innerHTML = `<div class="empty-state">
+        <div class="empty-icon"><i data-lucide="timer" style="width:18px;height:18px;display:inline-block;vertical-align:middle;"></i></div><h3>No sessions yet</h3>
+        <p>Start your first focus session above. Even 20 minutes counts.</p>
+      </div>`;
+      return;
     }
+    const tod = { morning:'🌅', afternoon:'☀️', evening:'🌆', night:'🌙' };
+    const classify = m => +m >= 90 ? '<i data-lucide="brain" style="width:18px;height:18px;display:inline-block;vertical-align:middle;"></i> Flow State' : +m >= 45 ? '💪 Deep Work' : +m >= 25 ? '🍅 Pomodoro' : '⚡ Burst';
+    cont.innerHTML = `<div class="table-wrap"><table>
+      <thead><tr><th>Date</th><th>Duration</th><th>Session Type</th><th>Time of Day</th></tr></thead>
+      <tbody>${d.sessions.map(s => `<tr>
+        <td>${FS.relDate(s.session_date)}</td>
+        <td><strong>${s.duration_minutes}</strong> min</td>
+        <td>${classify(s.duration_minutes)}</td>
+        <td>${tod[s.time_of_day]||''} ${s.time_of_day.charAt(0).toUpperCase()+s.time_of_day.slice(1)}</td>
+      </tr>`).join('')}</tbody>
+    </table></div>`;
+  }
 
-    await loadStats();
-    FS.showLoading(false);
-    document.getElementById('fs-app').style.display = 'flex';
+  await loadStats();
+  FS.showLoading(false);
+  document.getElementById('fs-app').style.display = 'flex';
 })();
 </script>
 </body>

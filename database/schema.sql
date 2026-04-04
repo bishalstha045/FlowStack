@@ -85,9 +85,26 @@ CREATE TABLE IF NOT EXISTS skills (
     skill_name        VARCHAR(150)     NOT NULL,
     proficiency_level TINYINT UNSIGNED NOT NULL DEFAULT 5,
     created_at        DATETIME         NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at        DATETIME         NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     PRIMARY KEY (id),
     KEY idx_skills_user (user_id),
     CONSTRAINT chk_proficiency CHECK (proficiency_level BETWEEN 1 AND 10),
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- ── skill_history ─────────────────────────────────────────────
+-- Tracks proficiency level changes over time for growth analytics
+CREATE TABLE IF NOT EXISTS skill_history (
+    id                INT UNSIGNED     NOT NULL AUTO_INCREMENT,
+    skill_id          INT UNSIGNED     NOT NULL,
+    user_id           INT UNSIGNED     NOT NULL,
+    proficiency_level TINYINT UNSIGNED NOT NULL,
+    recorded_at       DATETIME         NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    PRIMARY KEY (id),
+    KEY idx_skill_history_user (user_id),
+    KEY idx_skill_history_skill (skill_id),
+    CONSTRAINT chk_history_proficiency CHECK (proficiency_level BETWEEN 1 AND 10),
+    FOREIGN KEY (skill_id) REFERENCES skills(id) ON DELETE CASCADE,
     FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
@@ -110,6 +127,7 @@ CREATE TABLE IF NOT EXISTS next_move (
     user_id          INT UNSIGNED    NOT NULL,
     situation_text   TEXT            NOT NULL,
     generated_advice TEXT            NOT NULL,
+    cluster          VARCHAR(50)     DEFAULT 'general',
     created_at       DATETIME        NOT NULL DEFAULT CURRENT_TIMESTAMP,
     PRIMARY KEY (id),
     KEY idx_nextmove_user (user_id),
