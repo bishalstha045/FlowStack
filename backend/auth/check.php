@@ -7,7 +7,7 @@ require_once __DIR__ . '/../helpers/response.php';
 setApiHeaders();
 
 if (!isset($_SESSION['user_id']) || !is_int($_SESSION['user_id'])) {
-    http_response_code(401);
+    http_response_code(200);
     echo json_encode(['authenticated' => false]);
     exit;
 }

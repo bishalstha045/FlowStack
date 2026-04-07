@@ -41,25 +41,21 @@ FS.initIcons();
 FS.BACKEND = (function () {
     const loc = window.location;
     const parts = loc.pathname.split('/').filter(Boolean);
+    let basePath = '';
 
-    // Strategy 1: look for 'FlowStack' project folder in the path
-    for (let i = 0; i < parts.length; i++) {
-        if (parts[i].toLowerCase() === 'flowstack') {
-            const base = loc.origin + '/' + parts.slice(0, i + 1).join('/');
-            return base + '/backend';
+    const fsIndex = parts.findIndex(p => p.toLowerCase() === 'flowstack');
+    if (fsIndex >= 0) {
+        basePath = '/' + parts.slice(0, fsIndex + 1).join('/');
+    } else {
+        const feIndex = parts.findIndex(p => p.toLowerCase() === 'frontend');
+        if (feIndex >= 0) {
+            const sliced = parts.slice(0, feIndex);
+            basePath = sliced.length ? '/' + sliced.join('/') : '';
         }
     }
-
-    // Strategy 2: 'frontend' is detected — go up one level to project root
-    for (let i = 0; i < parts.length; i++) {
-        if (parts[i].toLowerCase() === 'frontend') {
-            const base = loc.origin + '/' + parts.slice(0, i).join('/');
-            return base + '/backend';
-        }
-    }
-
-    // Hard fallback: backend at root
-    return loc.origin + '/backend';
+    
+    if (basePath === '/') basePath = '';
+    return loc.origin + basePath + '/backend';
 })();
 
 
@@ -75,15 +71,32 @@ FS.api = async function (endpoint, method, body) {
 
     try {
         const res  = await fetch(FS.BACKEND + endpoint, opts);
-        let json   = {};
-        try { json = await res.json(); } catch (_) {}
+        const rawText = await res.text();
+        let json = null;
+
+        try { 
+            json = JSON.parse(rawText); 
+        } catch (e) {
+            // Salvage JSON if InfinityFree injected HTML tracking scripts at the end
+            const match = rawText.match(/({[\s\S]*})/);
+            if (match) {
+                try { json = JSON.parse(match[1]); } catch (_) {}
+            }
+        }
+
+        if (!json) {
+            console.error('[FS.api] Invalid response:', rawText);
+            return { ok: false, status: res.status, data: { error: 'Server configuration error or hosting intervention. Try again.' } };
+        }
 
         if (res.status === 401) {
             sessionStorage.clear();
             window.location.replace(FS.loginUrl());
             return { ok: false, status: 401, data: json };
         }
-        return { ok: res.ok, status: res.status, data: json };
+        
+        const isOk = (typeof json.ok === 'boolean') ? json.ok : res.ok;
+        return { ok: isOk, status: res.status, data: json };
     } catch (err) {
         console.error('[FS.api] Network error:', err);
         return {
@@ -100,9 +113,14 @@ FS.requireAuth = async function () {
             credentials: 'include',
             headers: { 'Accept': 'application/json' }
         });
-        let data = {};
-        try { data = await res.json(); } catch (_) {}
-        if (!data.authenticated) {
+        const rawText = await res.text();
+        let data = null;
+        try { data = JSON.parse(rawText); } catch (_) {
+            const m = rawText.match(/({[\s\S]*})/);
+            if (m) try { data = JSON.parse(m[1]); } catch (_) {}
+        }
+        
+        if (!data || !data.authenticated) {
             window.location.replace(FS.loginUrl());
             return null;
         }
