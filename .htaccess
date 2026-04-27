@@ -18,7 +18,7 @@ DirectoryIndex index.html index.php
 </IfModule>
 
 # Block direct access to PHP config files from browser
-<FilesMatch "^(db|oauth)\.php$">
+<FilesMatch "^(db|oauth|secrets)\.php$">
     Order Allow,Deny
     Deny from all
 </FilesMatch>

@@ -14,13 +14,14 @@ $uid = requireAuth();
 try {
     $pdo = getPDO();
 
-    // ── GET: list ────────────────────────────────────────────
     if ($_SERVER['REQUEST_METHOD'] === 'GET') {
         $stmt = $pdo->prepare(
-            'SELECT h.id, h.name, h.streak, h.last_completed,
+            'SELECT h.id, h.name, h.streak, h.last_completed, h.created_at,
                     (SELECT COUNT(*) FROM habit_logs hl
                      WHERE hl.habit_id=h.id
-                       AND hl.completed_date>=DATE_SUB(CURDATE(),INTERVAL 6 DAY)) AS week_completions
+                       AND hl.completed_date>=DATE_SUB(CURDATE(),INTERVAL 6 DAY)) AS week_completions,
+                    (SELECT COUNT(*) FROM habit_logs hl2
+                     WHERE hl2.habit_id=h.id) AS total_completions
              FROM habits h WHERE h.user_id=? ORDER BY h.streak DESC, h.name'
         );
         $stmt->execute([$uid]);
@@ -32,6 +33,12 @@ try {
             $c->execute([$h['id'], $today]);
             $h['done_today'] = (bool)$c->fetchColumn();
             $h['pct_week']   = round(($h['week_completions']/7)*100);
+            
+            // Real consistency: (completed days / days since created) x 100
+            $createdDate = new DateTime($h['created_at']);
+            $now = new DateTime();
+            $daysSinceCreated = max(1, $createdDate->diff($now)->days + 1);
+            $h['consistency'] = round(($h['total_completions'] / $daysSinceCreated) * 100);
         }
         unset($h);
         jsonOk(['habits' => $habits]);

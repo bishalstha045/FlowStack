@@ -3,9 +3,10 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta name="description" content="Analytics Visual charts of your FlowStack data.">
+  <meta name="description" content="Analytics — Visual charts of your FlowStack habits, focus, decisions, and skills.">
   <title>Analytics FlowStack</title>
   <link rel="stylesheet" href="assets/css/app.css">
+  <link rel="stylesheet" href="assets/css/style.css">
 </head>
 <body>
 <div id="fs-loading"><div class="fs-spinner"></div><span class="loading-text">Building your charts…</span></div>
@@ -20,34 +21,47 @@
       <div class="page-header">
         <div class="page-header-text">
           <h1>Analytics</h1>
-          <p>7-day behavioral charts habits, focus sessions, and decisions</p>
+          <p>Visual charts — habits, focus, decisions, and skill progress</p>
+        </div>
+        <div class="page-header-actions">
+          <select id="date-range" class="form-control" style="width:auto;min-width:140px" onchange="loadCharts()">
+            <option value="7" selected>Last 7 days</option>
+            <option value="30">Last 30 days</option>
+            <option value="all">All time</option>
+          </select>
         </div>
       </div>
 
       <div class="charts-grid">
 
         <div class="chart-card">
-          <h3>Daily Habit Completions</h3>
+          <h3><i data-lucide="check-circle" style="width:18px;height:18px;display:inline-block;vertical-align:middle;"></i> Daily Habit Completions</h3>
           <p>How many habits you completed each day</p>
           <div class="chart-wrap"><canvas id="habit-chart"></canvas></div>
         </div>
 
         <div class="chart-card">
-          <h3>Focus Minutes per Day</h3>
+          <h3><i data-lucide="timer" style="width:18px;height:18px;display:inline-block;vertical-align:middle;"></i> Focus Minutes per Day</h3>
           <p>Total minutes spent in deep work sessions</p>
           <div class="chart-wrap"><canvas id="focus-chart"></canvas></div>
         </div>
 
         <div class="chart-card">
-          <h3>Decision Outcomes</h3>
+          <h3><i data-lucide="git-merge" style="width:18px;height:18px;display:inline-block;vertical-align:middle;"></i> Decision Outcomes</h3>
           <p>Breakdown of all logged decisions by outcome</p>
           <div class="chart-wrap"><canvas id="decision-chart"></canvas></div>
         </div>
 
         <div class="chart-card">
-          <h3>Top Habit Streaks</h3>
+          <h3><i data-lucide="flame" style="width:18px;height:18px;display:inline-block;vertical-align:middle;"></i> Top Habit Streaks</h3>
           <p>Your habits ranked by current streak length</p>
           <div class="chart-wrap"><canvas id="streak-chart"></canvas></div>
+        </div>
+
+        <div class="chart-card" style="grid-column:1/-1">
+          <h3><i data-lucide="award" style="width:18px;height:18px;display:inline-block;vertical-align:middle;"></i> Skill Proficiency Map</h3>
+          <p>Your current skill levels visualized as a radar chart</p>
+          <div class="chart-wrap" style="max-width:500px;margin:0 auto"><canvas id="skill-chart"></canvas></div>
         </div>
 
       </div>
@@ -56,35 +70,46 @@
   </div>
 </div>
 
-<!-- Load Chart.js BEFORE app script -->
+<!-- Load Chart.js -->
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
 <script src="assets/js/app.js"></script>
 <script>
-(async function () {
-  const user = await FS.requireAuth();
-  if (!user) return;
-  FS.initLayout(user, 'analytics');
+// Store chart instances for cleanup on re-render
+let chartInstances = {};
+
+function destroyCharts() {
+  Object.values(chartInstances).forEach(c => { if (c) c.destroy(); });
+  chartInstances = {};
+}
+
+function makeChart(id, cfg) {
+  const ctx = document.getElementById(id);
+  if (!ctx) return null;
+  if (chartInstances[id]) chartInstances[id].destroy();
+  chartInstances[id] = new Chart(ctx, cfg);
+  return chartInstances[id];
+}
+
+async function loadCharts() {
+  destroyCharts();
+  const range = document.getElementById('date-range').value;
 
   Chart.defaults.font.family = "'Inter', system-ui, sans-serif";
-  Chart.defaults.color = '#64748B';
+  Chart.defaults.color = '#94A3B8';
 
   const colors = {
-    primary: 'rgba(99,102,241,0.8)',
-    primaryFill: 'rgba(99,102,241,0.12)',
+    primary: 'rgba(124,58,237,0.8)',
+    primaryFill: 'rgba(124,58,237,0.12)',
     success: 'rgba(16,185,129,0.8)',
     successFill: 'rgba(16,185,129,0.12)',
     danger: 'rgba(239,68,68,0.8)',
     warning: 'rgba(245,158,11,0.8)',
     neutral: 'rgba(148,163,184,0.8)',
+    purple: 'rgba(139,92,246,0.8)',
   };
 
-  function makeChart(id, cfg) {
-    const ctx = document.getElementById(id);
-    if (ctx) return new Chart(ctx, cfg);
-  }
-
   // Habit completions bar chart
-  const hRes = await FS.api('/api/analytics/habit_chart.php');
+  const hRes = await FS.api('/api/analytics/habit_chart.php?range=' + range);
   if (hRes.ok) {
     const { labels, data, top_streaks } = hRes.data;
     makeChart('habit-chart', {
@@ -102,7 +127,10 @@
       options: {
         responsive: true, maintainAspectRatio: false,
         plugins: { legend: { display: false } },
-        scales: { y: { beginAtZero: true, ticks: { stepSize: 1, precision: 0 } } }
+        scales: { 
+          y: { beginAtZero: true, ticks: { stepSize: 1, precision: 0 }, grid: { color: 'rgba(148,163,184,0.1)' } },
+          x: { grid: { display: false } }
+        }
       }
     });
 
@@ -114,7 +142,7 @@
           datasets: [{
             label: 'Streak (days)',
             data: top_streaks.map(s => s.streak),
-            backgroundColor: [colors.primary,'rgba(139,92,246,.8)',colors.success,colors.warning,'rgba(239,68,68,.7)'],
+            backgroundColor: [colors.primary, colors.purple, colors.success, colors.warning, colors.danger],
             borderRadius: 6,
           }]
         },
@@ -122,14 +150,19 @@
           indexAxis: 'y',
           responsive: true, maintainAspectRatio: false,
           plugins: { legend: { display: false } },
-          scales: { x: { beginAtZero: true } }
+          scales: { 
+            x: { beginAtZero: true, grid: { color: 'rgba(148,163,184,0.1)' } },
+            y: { grid: { display: false } }
+          }
         }
       });
+    } else {
+      document.getElementById('streak-chart').closest('.chart-card').querySelector('p').textContent = 'No habit streaks yet. Start completing habits daily!';
     }
   }
 
   // Focus line chart
-  const fRes = await FS.api('/api/analytics/focus_chart.php');
+  const fRes = await FS.api('/api/analytics/focus_chart.php?range=' + range);
   if (fRes.ok) {
     const { labels, data } = fRes.data;
     makeChart('focus-chart', {
@@ -143,13 +176,16 @@
           backgroundColor: colors.successFill,
           tension: 0.4, fill: true, pointRadius: 5,
           pointBackgroundColor: colors.success,
-          pointBorderColor: '#fff', pointBorderWidth: 2,
+          pointBorderColor: 'rgba(30,41,59,1)', pointBorderWidth: 2,
         }]
       },
       options: {
         responsive: true, maintainAspectRatio: false,
         plugins: { legend: { display: false } },
-        scales: { y: { beginAtZero: true } }
+        scales: { 
+          y: { beginAtZero: true, grid: { color: 'rgba(148,163,184,0.1)' } },
+          x: { grid: { display: false } }
+        }
       }
     });
   }
@@ -162,18 +198,18 @@
       makeChart('decision-chart', {
         type: 'doughnut',
         data: {
-          labels: ['Good <i data-lucide="check-circle" style="width:18px;height:18px;display:inline-block;vertical-align:middle;"></i>', 'Neutral ⚪', 'Bad ❌'],
+          labels: ['Good ✅', 'Neutral ⚪', 'Bad ❌'],
           datasets: [{
             data: [breakdown.good, breakdown.neutral, breakdown.bad],
             backgroundColor: [colors.success, colors.neutral, colors.danger],
-            borderWidth: 3, borderColor: '#fff',
+            borderWidth: 2, borderColor: 'rgba(30,41,59,0.8)',
           }]
         },
         options: {
           responsive: true, maintainAspectRatio: false,
           cutout: '65%',
           plugins: {
-            legend: { position: 'bottom', labels: { padding: 16 } },
+            legend: { position: 'bottom', labels: { padding: 16, color: '#94A3B8' } },
             tooltip: {
               callbacks: { afterBody: () => [`Win rate: ${win_rate}%`] }
             }
@@ -181,10 +217,55 @@
         }
       });
     } else {
-      document.querySelector('#decision-chart')?.closest('.chart-card')?.querySelector('p')
-        && (document.querySelector('#decision-chart').closest('.chart-card').querySelector('p').textContent = 'No decisions logged yet.');
+      document.getElementById('decision-chart').closest('.chart-card').querySelector('p').textContent = 'No decisions logged yet. Start logging to see breakdown.';
     }
   }
+
+  // Skill radar chart
+  const sRes = await FS.api('/api/skills/index.php');
+  if (sRes.ok && sRes.data.skills?.length >= 2) {
+    const skills = sRes.data.skills;
+    makeChart('skill-chart', {
+      type: 'radar',
+      data: {
+        labels: skills.map(s => s.skill_name.length > 14 ? s.skill_name.slice(0,14)+'…' : s.skill_name),
+        datasets: [{
+          label: 'Proficiency',
+          data: skills.map(s => +s.proficiency_level),
+          backgroundColor: 'rgba(124,58,237,0.15)',
+          borderColor: colors.primary,
+          borderWidth: 2,
+          pointBackgroundColor: colors.primary,
+          pointBorderWidth: 2,
+          pointRadius: 5,
+        }]
+      },
+      options: {
+        responsive: true, maintainAspectRatio: true,
+        plugins: { legend: { display: false } },
+        scales: {
+          r: {
+            min: 0, max: 10,
+            ticks: { stepSize: 2, backdropColor: 'transparent', color: '#64748B' },
+            grid: { color: 'rgba(148,163,184,0.15)' },
+            pointLabels: { color: '#94A3B8', font: { size: 11 } },
+            angleLines: { color: 'rgba(148,163,184,0.15)' }
+          }
+        }
+      }
+    });
+  } else {
+    document.getElementById('skill-chart').closest('.chart-card').querySelector('p').textContent =
+      sRes.ok && sRes.data.skills?.length < 2 ? 'Add at least 2 skills to see the radar chart.' : 'No skills mapped yet.';
+  }
+}
+
+(async function () {
+  const user = await FS.requireAuth();
+  if (!user) return;
+  FS.initLayout(user, 'analytics');
+
+  await loadCharts();
 
   FS.showLoading(false);
   document.getElementById('fs-app').style.display = 'flex';

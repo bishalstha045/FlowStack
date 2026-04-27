@@ -1,0 +1,13 @@
+# ── OS / editor junk ────────────────────────────────────────────
+.DS_Store
+Thumbs.db
+*.swp
+*.swo
+.idea/
+.vscode/
+
+# ── Secrets — NEVER commit API keys ─────────────────────────────
+backend/config/secrets.php
+
+# ── Node (if used for tooling) ───────────────────────────────────
+node_modules/

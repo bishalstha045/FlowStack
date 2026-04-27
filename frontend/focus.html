@@ -3,10 +3,110 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta name="description" content="Focus Tracker Measure deep work and get productivity insights.">
-  <title>Focus Tracker FlowStack</title>
+  <meta name="description" content="Focus Tracker — Deep work sessions with Pomodoro timer, flow-state detection, and AI productivity insights.">
+  <title>Focus Tracker · FlowStack</title>
   <link rel="stylesheet" href="assets/css/app.css">
   <link rel="stylesheet" href="assets/css/style.css">
+  <style>
+    @keyframes fadeInUp { from{opacity:0;transform:translateY(12px)} to{opacity:1;transform:translateY(0)} }
+    @keyframes breathe  { 0%,100%{box-shadow:0 0 0 0 rgba(139,92,246,0.15)} 50%{box-shadow:0 0 0 18px rgba(139,92,246,0)} }
+    @keyframes spin     { to{transform:rotate(360deg)} }
+    @keyframes countUp  { from{opacity:0;transform:scale(.8)} to{opacity:1;transform:scale(1)} }
+    @keyframes barFill  { from{width:0} }
+
+    /* ── Stats row ──────────────────────────────── */
+    .focus-stats { display:grid; grid-template-columns:repeat(4,1fr); gap:14px; margin-bottom:22px; }
+    @media(max-width:700px){ .focus-stats{grid-template-columns:repeat(2,1fr)} }
+    .fstat {
+      background:rgba(255,255,255,0.04); border:1px solid rgba(255,255,255,0.08);
+      border-radius:16px; padding:18px 16px; position:relative; overflow:hidden;
+      animation:fadeInUp .3s ease;
+    }
+    .fstat::before { content:''; position:absolute; top:0; left:0; width:100%; height:3px; }
+    .fstat.fs-today::before  { background:var(--success); }
+    .fstat.fs-week::before   { background:var(--p); }
+    .fstat.fs-avg::before    { background:#f59e0b; }
+    .fstat.fs-deep::before   { background:#06b6d4; }
+    .fstat-icon { font-size:1.4rem; margin-bottom:6px; display:block; }
+    .fstat-val  { font-size:2rem; font-weight:800; line-height:1; color:var(--tx); }
+    .fstat-lbl  { font-size:.75rem; text-transform:uppercase; letter-spacing:.05em; color:var(--tx3); margin-top:4px; }
+
+    /* ── Timer card ─────────────────────────────── */
+    .timer-card {
+      background:rgba(139,92,246,0.06); border:1px solid rgba(139,92,246,0.18);
+      border-radius:24px; padding:36px 28px; margin-bottom:22px;
+      display:flex; flex-direction:column; align-items:center;
+      animation:fadeInUp .3s ease;
+    }
+    .timer-ring-wrap { position:relative; margin-bottom:18px; }
+    .timer-ring      { transform:rotate(-90deg); }
+    .timer-ring-bg   { fill:none; stroke:rgba(255,255,255,0.06); stroke-width:6; }
+    .timer-ring-fill { fill:none; stroke:var(--p); stroke-width:6; stroke-linecap:round;
+                       stroke-dasharray:283; stroke-dashoffset:283;
+                       transition:stroke-dashoffset 1s linear; }
+    .timer-time {
+      position:absolute; top:50%; left:50%; transform:translate(-50%,-50%);
+      font-size:2.8rem; font-weight:800; color:var(--tx); letter-spacing:-.02em;
+      font-variant-numeric:tabular-nums;
+    }
+    .timer-phase { font-size:.8rem; color:var(--tx3); text-align:center; margin-top:4px; min-height:20px; }
+    .timer-label { font-size:.72rem; font-weight:600; text-transform:uppercase;
+                   letter-spacing:.1em; color:var(--p); margin-bottom:14px; }
+
+    .session-presets { display:flex; gap:10px; margin-bottom:18px; flex-wrap:wrap; justify-content:center; }
+    .preset-btn {
+      padding:7px 16px; border-radius:20px; border:1px solid rgba(255,255,255,0.1);
+      background:rgba(255,255,255,0.04); color:var(--tx2); font-size:.82rem;
+      cursor:pointer; transition:all .2s;
+    }
+    .preset-btn.active, .preset-btn:hover { background:rgba(139,92,246,0.18); border-color:var(--p); color:var(--p); }
+
+    .timer-btns { display:flex; gap:12px; }
+    .timer-status {
+      font-size:.85rem; color:var(--tx3); text-align:center; margin-top:10px;
+      min-height:20px; transition:color .3s;
+    }
+    .timer-status.active { color:var(--p); }
+
+    /* ── AI Insight card ───────────────────────── */
+    .ai-insight-card {
+      position:relative; background:rgba(139,92,246,0.06);
+      border:1px solid rgba(139,92,246,0.2); border-left:4px solid var(--p);
+      border-radius:16px; padding:20px 22px; margin-bottom:22px;
+      animation:fadeInUp .35s ease;
+    }
+    .ai-badge {
+      position:absolute; top:14px; right:14px;
+      background:rgba(139,92,246,0.18); color:var(--p);
+      border:1px solid rgba(139,92,246,0.3); border-radius:20px;
+      padding:3px 10px; font-size:.72rem; font-weight:600;
+    }
+    .ai-insight-text { color:var(--tx2); font-size:.88rem; line-height:1.8; margin-top:8px; white-space:pre-line; }
+    .ai-loading { display:flex; align-items:center; gap:10px; color:var(--tx3); font-size:.85rem; }
+    .ai-error   { background:rgba(245,158,11,.08); border:1px solid rgba(245,158,11,.25); border-radius:10px;
+                  padding:10px 14px; color:var(--warning); font-size:.83rem;
+                  display:flex; align-items:center; justify-content:space-between; gap:10px; }
+
+    /* ── Sessions table ─────────────────────────── */
+    .session-row {
+      display:grid; grid-template-columns:1fr auto auto auto; gap:12px; align-items:center;
+      padding:12px 16px; border-radius:12px;
+      background:rgba(255,255,255,0.025); border:1px solid rgba(255,255,255,0.06);
+      margin-bottom:8px; animation:fadeInUp .25s ease;
+      transition:background .2s;
+    }
+    .session-row:hover { background:rgba(255,255,255,0.045); }
+    .session-type-badge {
+      padding:3px 10px; border-radius:20px; font-size:.75rem; font-weight:600;
+      background:rgba(139,92,246,0.12); color:var(--p);
+    }
+    .session-type-badge.deep { background:rgba(6,182,212,0.12); color:#06b6d4; }
+    .session-type-badge.pomo { background:rgba(239,68,68,0.1); color:#ef4444; }
+    .session-type-badge.burst{ background:rgba(245,158,11,0.1); color:#f59e0b; }
+
+    .empty-state { text-align:center; padding:48px 20px; color:var(--tx3); }
+    .empty-state h3 { color:var(--tx2); margin-bottom:8px; }
+  </style>
 </head>
 <body>
 <div id="fs-loading"><div class="fs-spinner"></div><span class="loading-text">Loading focus data…</span></div>
@@ -20,78 +120,82 @@
 
       <div class="page-header">
         <div class="page-header-text">
-          <h1>Focus Tracker</h1>
-          <p>Track deep work sessions and get intelligent productivity analysis</p>
+          <h1>⏱️ Focus Tracker</h1>
+          <p>Deep work sessions, Pomodoro timer, flow-state detection, and AI productivity analysis</p>
         </div>
       </div>
 
-      <!-- Productivity score + metrics -->
-      <div class="prod-score-card" id="prod-card" style="display:none">
-        <div id="focus-gauge"></div>
-        <div class="prod-score-right">
-          <div class="prod-score-title">PRODUCTIVITY SCORE</div>
-          <div class="prod-score-val" id="ps-val"></div>
-          <div class="prod-score-sub" id="ps-sub"></div>
-          <div class="prod-metric-row">
-            <div class="prod-metric">
-              <div class="val" id="pm-avg"></div>
-              <div class="lbl">Avg Session</div>
-            </div>
-            <div class="prod-metric">
-              <div class="val" id="pm-deep"></div>
-              <div class="lbl">Deep Work</div>
-            </div>
-            <div class="prod-metric">
-              <div class="val" id="pm-week"></div>
-              <div class="lbl">Week Hours</div>
-            </div>
-            <div class="prod-metric">
-              <div class="val" id="pm-trend"></div>
-              <div class="lbl">Trend</div>
-            </div>
-          </div>
+      <!-- Stats -->
+      <div class="focus-stats" id="focus-stats" style="display:none">
+        <div class="fstat fs-today">
+          <span class="fstat-icon">☀️</span>
+          <div class="fstat-val" id="fstat-today">0</div>
+          <div class="fstat-lbl">Today (min)</div>
+        </div>
+        <div class="fstat fs-week">
+          <span class="fstat-icon">📅</span>
+          <div class="fstat-val" id="fstat-week">0</div>
+          <div class="fstat-lbl">This Week (hrs)</div>
+        </div>
+        <div class="fstat fs-avg">
+          <span class="fstat-icon">📊</span>
+          <div class="fstat-val" id="fstat-avg">0</div>
+          <div class="fstat-lbl">Avg Session (min)</div>
+        </div>
+        <div class="fstat fs-deep">
+          <span class="fstat-icon">🧠</span>
+          <div class="fstat-val" id="fstat-deep">0</div>
+          <div class="fstat-lbl">Deep Sessions</div>
         </div>
       </div>
 
-      <!-- Intelligence insights -->
-      <div class="intel-panel" id="focus-intel-panel" style="display:none">
-        <div class="intel-header">
-          <h2><i data-lucide="brain" style="width:18px;height:18px;display:inline-block;vertical-align:middle;"></i> Focus Intelligence</h2>
-          <span class="intel-badge" id="focus-badge"></span>
+      <!-- AI Insight -->
+      <div id="focus-ai-panel" style="display:none">
+        <div class="ai-insight-card">
+          <span class="ai-badge">✨ Gemini AI</span>
+          <div style="font-weight:700;font-size:.9rem;color:var(--tx);margin-bottom:6px">⚡ Focus Intelligence</div>
+          <div id="focus-ai-content" class="ai-insight-text"></div>
         </div>
-        <div id="focus-insights"></div>
       </div>
 
       <!-- Timer -->
-      <div class="card timer-card">
-        <div class="timer-display" id="timer-display">00:00</div>
-        <div class="timer-progress"><div class="timer-progress-bar" id="timer-bar"></div></div>
-        <div class="timer-status" id="timer-status">Ready start a deep work session</div>
-        <div class="timer-actions" id="timer-actions">
-          <button class="btn btn-primary btn-lg" onclick="startTimer()"><i data-lucide="compass" style="width:18px;height:18px;display:inline-block;vertical-align:middle;"></i> Start Session</button>
+      <div class="timer-card">
+        <div class="timer-label" id="timer-label">FOCUS SESSION</div>
+
+        <!-- Presets -->
+        <div class="session-presets">
+          <button class="preset-btn active" id="pre-25" onclick="setPreset(25)">🍅 25 min</button>
+          <button class="preset-btn" id="pre-45" onclick="setPreset(45)">💪 45 min</button>
+          <button class="preset-btn" id="pre-90" onclick="setPreset(90)">🧠 90 min</button>
+          <button class="preset-btn" id="pre-custom" onclick="setPreset(0)">⚙️ Custom</button>
         </div>
+        <div id="custom-input" style="display:none;margin-bottom:14px">
+          <input type="number" id="custom-mins" class="form-control" min="1" max="240"
+                 placeholder="Minutes (1–240)" style="width:160px;text-align:center"
+                 oninput="applyCustom()">
+        </div>
+
+        <!-- Ring timer -->
+        <div class="timer-ring-wrap">
+          <svg class="timer-ring" width="160" height="160" viewBox="0 0 100 100">
+            <circle class="timer-ring-bg" cx="50" cy="50" r="45"/>
+            <circle class="timer-ring-fill" id="ring-fill" cx="50" cy="50" r="45"/>
+          </svg>
+          <div class="timer-time" id="timer-display">25:00</div>
+        </div>
+
+        <div class="timer-phase" id="timer-phase">Choose a duration and start your session</div>
+
+        <div class="timer-btns">
+          <button class="btn btn-primary btn-lg" id="btn-start" onclick="startTimer()">▶ Start</button>
+          <button class="btn btn-success btn-lg" id="btn-save" onclick="stopTimer()" style="display:none">✓ Save</button>
+          <button class="btn btn-ghost btn-lg" id="btn-pause" onclick="pauseTimer()" style="display:none">⏸ Pause</button>
+          <button class="btn btn-danger btn-lg" id="btn-discard" onclick="discardTimer()" style="display:none">✕ Discard</button>
+        </div>
+        <div class="timer-status" id="timer-status">Ready — pick a session type and hit Start</div>
       </div>
 
-      <!-- Stats row -->
-      <div class="stats-grid" style="grid-template-columns:repeat(3,1fr);margin-bottom:20px">
-        <div class="stat-card">
-          <div class="stat-card-top"><div class="stat-icon green">☀️</div></div>
-          <div class="stat-value" id="stat-today"></div>
-          <div class="stat-label">Today (min)</div>
-        </div>
-        <div class="stat-card">
-          <div class="stat-card-top"><div class="stat-icon indigo">📅</div></div>
-          <div class="stat-value" id="stat-week"></div>
-          <div class="stat-label">This Week (hrs)</div>
-        </div>
-        <div class="stat-card">
-          <div class="stat-card-top"><div class="stat-icon amber"><i data-lucide="bar-chart" style="width:18px;height:18px;display:inline-block;vertical-align:middle;"></i></div></div>
-          <div class="stat-value" id="stat-avg"></div>
-          <div class="stat-label">Avg Session (min)</div>
-        </div>
-      </div>
-
-      <!-- Sessions table -->
+      <!-- Sessions -->
       <div class="section-title"><span>Recent Sessions</span></div>
       <div id="sessions-container"></div>
 
@@ -107,116 +211,200 @@
   if (!user) return;
   FS.initLayout(user, 'focus');
 
-  let interval = null, elapsed = 0, running = false;
-  const display = document.getElementById('timer-display');
-  const status  = document.getElementById('timer-status');
-  const bar     = document.getElementById('timer-bar');
-  const actions = document.getElementById('timer-actions');
+  let interval = null, elapsed = 0, running = false, paused = false;
+  let targetSecs = 25 * 60, currentPreset = 25;
+  const CIRCUMFERENCE = 2 * Math.PI * 45; // ~283
+
+  const display  = document.getElementById('timer-display');
+  const status   = document.getElementById('timer-status');
+  const phase    = document.getElementById('timer-phase');
+  const ringFill = document.getElementById('ring-fill');
+  ringFill.style.strokeDasharray  = CIRCUMFERENCE;
+  ringFill.style.strokeDashoffset = CIRCUMFERENCE;
 
   const pad = n => String(n).padStart(2, '0');
   const fmt = s => pad(Math.floor(s/60)) + ':' + pad(s % 60);
 
+  function setRingProgress(frac) {
+    ringFill.style.strokeDashoffset = CIRCUMFERENCE * (1 - Math.min(frac, 1));
+  }
+
+  function setPreset(mins) {
+    if (running) return;
+    currentPreset = mins;
+    document.querySelectorAll('.preset-btn').forEach(b => b.classList.remove('active'));
+    if (mins > 0) {
+      document.getElementById('pre-' + mins)?.classList.add('active');
+      document.getElementById('custom-input').style.display = 'none';
+      targetSecs = mins * 60;
+    } else {
+      document.getElementById('pre-custom').classList.add('active');
+      document.getElementById('custom-input').style.display = 'block';
+    }
+    elapsed = 0;
+    display.textContent = mins > 0 ? fmt(targetSecs) : '00:00';
+    setRingProgress(0);
+    phase.textContent = 'Choose a duration and start your session';
+  }
+  window.setPreset = setPreset;
+
+  function applyCustom() {
+    const v = parseInt(document.getElementById('custom-mins').value) || 0;
+    if (v >= 1 && v <= 240) {
+      targetSecs = v * 60;
+      display.textContent = fmt(targetSecs);
+      setRingProgress(0);
+    }
+  }
+  window.applyCustom = applyCustom;
+
   window.startTimer = function () {
     if (running) return;
-    running = true; elapsed = 0;
-    display.textContent = '00:00';
-    status.textContent  = '<i data-lucide="target" style="width:18px;height:18px;display:inline-block;vertical-align:middle;"></i> In the zone stay focused!';
-    bar.style.width = '0%';
-    actions.innerHTML = `
-      <button class="btn btn-success btn-lg" onclick="stopTimer()">✓ Save Session</button>
-      <button class="btn btn-ghost btn-lg"   onclick="discardTimer()">✕ Discard</button>`;
+    if (!targetSecs) { FS.toast('Set a session duration first.', 'danger'); return; }
+    running = true; paused = false; elapsed = 0;
+    document.getElementById('btn-start').style.display   = 'none';
+    document.getElementById('btn-pause').style.display   = 'inline-flex';
+    document.getElementById('btn-save').style.display    = 'inline-flex';
+    document.getElementById('btn-discard').style.display = 'inline-flex';
+    status.textContent = '🎯 In the zone — stay focused!';
+    status.classList.add('active');
+    document.getElementById('timer-label').textContent = currentPreset === 25 ? '🍅 POMODORO' :
+      currentPreset === 45 ? '💪 DEEP WORK' : currentPreset === 90 ? '🧠 FLOW STATE' : '⚡ FOCUS SESSION';
+
     interval = setInterval(() => {
       elapsed++;
-      display.textContent = fmt(elapsed);
-      bar.style.width = Math.min((elapsed / 1500) * 100, 100) + '%'; // 25-min Pomodoro = 100%
-      // Phase labels
-      if (elapsed === 300)  status.textContent = '5 min warm-up done. Distractions should fade now.';
-      if (elapsed === 900)  status.textContent = '15 min entering flow state territory.';
-      if (elapsed === 1500) status.textContent = '🍅 25 min Pomodoro complete! Consider saving or extending.';
-      if (elapsed === 2700) status.textContent = '45 min deep work achieved. <i data-lucide="brain" style="width:18px;height:18px;display:inline-block;vertical-align:middle;"></i>';
+      const remaining = Math.max(0, targetSecs - elapsed);
+      display.textContent = fmt(remaining);
+      setRingProgress(elapsed / targetSecs);
+
+      if (elapsed === 300)  phase.textContent = '5 min done — distractions should be fading.';
+      if (elapsed === 900)  phase.textContent = '15 min — entering flow state territory. 🌊';
+      if (elapsed === 1500) phase.textContent = '🍅 25 min Pomodoro complete! Keep going or save.';
+      if (elapsed === 2700) phase.textContent = '45 min — deep work achieved! 💪';
+      if (elapsed === 5400) phase.textContent = '90 min — elite flow state! Save and rest. 🧠';
+
+      if (remaining === 0) {
+        clearInterval(interval);
+        status.textContent = '⏰ Session complete! Save your progress.';
+        phase.textContent = '🎉 Done! Great work.';
+        setRingProgress(1);
+        // Notification
+        if (Notification?.permission === 'granted') {
+          new Notification('FlowStack: Session Complete!', { body: `${Math.round(elapsed/60)} min deep work saved.` });
+        }
+      }
     }, 1000);
+  };
+
+  window.pauseTimer = function () {
+    if (!running) return;
+    if (!paused) {
+      clearInterval(interval);
+      paused = true;
+      document.getElementById('btn-pause').textContent = '▶ Resume';
+      status.textContent = '⏸ Paused — click Resume to continue';
+    } else {
+      paused = false;
+      document.getElementById('btn-pause').textContent = '⏸ Pause';
+      status.textContent = '🎯 Back in the zone!';
+      interval = setInterval(() => {
+        elapsed++;
+        const remaining = Math.max(0, targetSecs - elapsed);
+        display.textContent = fmt(remaining);
+        setRingProgress(elapsed / targetSecs);
+        if (remaining === 0) { clearInterval(interval); status.textContent = '⏰ Session complete!'; }
+      }, 1000);
+    }
   };
 
   window.stopTimer = async function () {
     if (!running) return;
-    clearInterval(interval); running = false;
+    clearInterval(interval); running = false; paused = false;
     const mins = Math.max(1, Math.round(elapsed / 60));
-    status.textContent = '💾 Saving…';
-    actions.innerHTML  = '';
+    status.textContent = '💾 Saving session…';
+    document.getElementById('btn-save').style.display    = 'none';
+    document.getElementById('btn-pause').style.display   = 'none';
+    document.getElementById('btn-discard').style.display = 'none';
+    document.getElementById('btn-start').style.display   = 'inline-flex';
+    status.classList.remove('active');
+
     const res = await FS.api('/api/focus/index.php', 'POST', { duration_minutes: mins });
     if (res.ok) {
-      const type = mins >= 45 ? '<i data-lucide="brain" style="width:18px;height:18px;display:inline-block;vertical-align:middle;"></i> Deep work' : mins >= 25 ? '🍅 Pomodoro' : '⚡ Quick burst';
-      FS.toast(`${type} saved! ${mins} min ${Math.round(mins * 16.67)} calories equivalent focus. <i data-lucide="target" style="width:18px;height:18px;display:inline-block;vertical-align:middle;"></i>`, 'success');
+      const type = mins >= 90 ? '🧠 Flow State' : mins >= 45 ? '💪 Deep Work' : mins >= 25 ? '🍅 Pomodoro' : '⚡ Burst';
+      FS.toast(`${type} saved! ${mins} min focused.`, 'success');
       loadStats();
     } else FS.toast(res.data.error || 'Save failed', 'danger');
-    resetTimer();
+    elapsed = 0; display.textContent = fmt(targetSecs); setRingProgress(0);
+    status.textContent = 'Ready — pick a session type and hit Start';
+    phase.textContent = 'Choose a duration and start your session';
   };
 
   window.discardTimer = function () {
-    clearInterval(interval); running = false;
-    FS.toast('Session discarded.', 'danger');
-    resetTimer();
-  };
-
-  function resetTimer() {
+    clearInterval(interval); running = false; paused = false;
     elapsed = 0;
-    display.textContent = '00:00';
-    status.textContent  = 'Ready start a deep work session';
-    bar.style.width = '0%';
-    actions.innerHTML = `<button class="btn btn-primary btn-lg" onclick="startTimer()"><i data-lucide="compass" style="width:18px;height:18px;display:inline-block;vertical-align:middle;"></i> Start Session</button>`;
-  }
+    document.getElementById('btn-save').style.display    = 'none';
+    document.getElementById('btn-pause').style.display   = 'none';
+    document.getElementById('btn-discard').style.display = 'none';
+    document.getElementById('btn-start').style.display   = 'inline-flex';
+    display.textContent = fmt(targetSecs); setRingProgress(0);
+    status.textContent = 'Ready — pick a session type and hit Start';
+    status.classList.remove('active');
+    phase.textContent = 'Choose a duration and start your session';
+    FS.toast('Session discarded.', 'danger');
+  };
 
   async function loadStats() {
     const res = await FS.api('/api/focus/index.php');
     if (!res.ok) return;
     const d = res.data;
 
-    document.getElementById('stat-today').textContent = d.today_minutes;
-    document.getElementById('stat-week').textContent  = d.week_hours;
-    document.getElementById('stat-avg').textContent   = d.avg_minutes;
+    document.getElementById('focus-stats').style.display = 'grid';
+    document.getElementById('fstat-today').textContent = d.today_minutes;
+    document.getElementById('fstat-week').textContent  = d.week_hours;
+    document.getElementById('fstat-avg').textContent   = d.avg_minutes;
 
-    // Intelligence
     const intel = Intel.focus(d.sessions || [], d);
-    if (intel && d.sessions?.length) {
-      document.getElementById('prod-card').style.display = 'flex';
-      Intel.renderScoreGauge(intel.productivityScore, 'Score', document.getElementById('focus-gauge'));
-      document.getElementById('ps-val').textContent = intel.productivityScore + '/100';
-      const tier = intel.productivityScore >= 80 ? 'Elite' : intel.productivityScore >= 60 ? 'Strong' : intel.productivityScore >= 40 ? 'Building' : 'Low';
-      document.getElementById('ps-sub').textContent  = tier + ' Productivity';
-      document.getElementById('pm-avg').textContent  = intel.metrics.avgMins + ' min';
-      document.getElementById('pm-deep').textContent = intel.metrics.deepWork + ' deep';
-      document.getElementById('pm-week').textContent = intel.metrics.weekHrs + ' hrs';
-      const trendEl = document.getElementById('pm-trend');
-      trendEl.className = 'val ' + (intel.metrics.trend === 'improving' ? 'trend-up' : intel.metrics.trend === 'declining' ? 'trend-down' : 'trend-flat');
-      trendEl.textContent = intel.metrics.trend === 'improving' ? '↑ Up' : intel.metrics.trend === 'declining' ? '↓ Down' : '→ Stable';
+    document.getElementById('fstat-deep').textContent = intel?.metrics?.deepWork || 0;
 
-      document.getElementById('focus-intel-panel').style.display = 'block';
-      const badge = document.getElementById('focus-badge');
-      badge.textContent = intel.productivityScore >= 60 ? 'High Performance' : intel.productivityScore >= 40 ? 'On Track' : 'Needs Boost';
-      badge.className   = 'intel-badge badge-' + (intel.productivityScore >= 60 ? 'success' : intel.productivityScore >= 40 ? 'warn' : 'danger');
-      Intel.renderInsights(intel.insights, document.getElementById('focus-insights'));
+    if (intel && d.sessions?.length) {
+      document.getElementById('focus-ai-panel').style.display = 'block';
+      document.getElementById('focus-ai-content').innerHTML =
+        '<div class="ai-loading"><div class="fs-spinner" style="width:14px;height:14px;border-width:2px;border-top-color:var(--p)"></div><span>Gemini AI is analyzing your focus sessions…</span></div>';
+
+      FS.api('/api/ai/insight.php', 'POST', { module: 'focus', data: intel.metrics }).then(aiRes => {
+        if (aiRes.ok && aiRes.data.insight) {
+          document.getElementById('focus-ai-content').textContent = aiRes.data.insight;
+        } else {
+          document.getElementById('focus-ai-content').innerHTML =
+            '<div class="ai-error"><span>⚠️ Could not load AI insight.</span><button class="btn btn-sm btn-secondary" onclick="loadStats()">Retry</button></div>';
+        }
+      });
     }
 
-    // Sessions table
     const cont = document.getElementById('sessions-container');
     if (!d.sessions?.length) {
-      cont.innerHTML = `<div class="empty-state">
-        <div class="empty-icon"><i data-lucide="timer" style="width:18px;height:18px;display:inline-block;vertical-align:middle;"></i></div><h3>No sessions yet</h3>
-        <p>Start your first focus session above. Even 20 minutes counts.</p>
-      </div>`;
+      cont.innerHTML = `<div class="empty-state"><div style="font-size:2.5rem;margin-bottom:12px">⏱️</div>
+        <h3>No sessions yet</h3><p>Start your first focus session above. Even 20 minutes counts.</p></div>`;
       return;
     }
+    const typeOf = m => +m >= 90 ? {lbl:'Flow State',cls:'deep'} : +m >= 45 ? {lbl:'Deep Work',cls:'deep'} : +m >= 25 ? {lbl:'Pomodoro',cls:'pomo'} : {lbl:'Burst',cls:'burst'};
     const tod = { morning:'🌅', afternoon:'☀️', evening:'🌆', night:'🌙' };
-    const classify = m => +m >= 90 ? '<i data-lucide="brain" style="width:18px;height:18px;display:inline-block;vertical-align:middle;"></i> Flow State' : +m >= 45 ? '💪 Deep Work' : +m >= 25 ? '🍅 Pomodoro' : '⚡ Burst';
-    cont.innerHTML = `<div class="table-wrap"><table>
-      <thead><tr><th>Date</th><th>Duration</th><th>Session Type</th><th>Time of Day</th></tr></thead>
-      <tbody>${d.sessions.map(s => `<tr>
-        <td>${FS.relDate(s.session_date)}</td>
-        <td><strong>${s.duration_minutes}</strong> min</td>
-        <td>${classify(s.duration_minutes)}</td>
-        <td>${tod[s.time_of_day]||''} ${s.time_of_day.charAt(0).toUpperCase()+s.time_of_day.slice(1)}</td>
-      </tr>`).join('')}</tbody>
-    </table></div>`;
+    cont.innerHTML = d.sessions.slice(0, 15).map(s => {
+      const t = typeOf(s.duration_minutes);
+      return `<div class="session-row">
+        <div>
+          <div style="font-weight:600;font-size:.9rem;color:var(--tx)">${FS.relDate(s.session_date)}</div>
+          <div style="font-size:.78rem;color:var(--tx3)">${tod[s.time_of_day]||''} ${s.time_of_day}</div>
+        </div>
+        <div style="font-size:1.1rem;font-weight:800;color:var(--tx)">${s.duration_minutes}<span style="font-size:.75rem;color:var(--tx3);font-weight:400"> min</span></div>
+        <span class="session-type-badge ${t.cls}">${t.lbl}</span>
+      </div>`;
+    }).join('');
+  }
+
+  // Request notification permission
+  if ('Notification' in window && Notification.permission === 'default') {
+    Notification.requestPermission();
   }
 
   await loadStats();

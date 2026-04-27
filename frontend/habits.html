@@ -3,10 +3,135 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta name="description" content="HabitSync Intelligent habit tracking with streaks and smart feedback.">
-  <title>HabitSync FlowStack</title>
+  <meta name="description" content="HabitSync — Intelligent habit tracking with streaks, AI insights, and consistency analysis.">
+  <title>HabitSync · FlowStack</title>
   <link rel="stylesheet" href="assets/css/app.css">
   <link rel="stylesheet" href="assets/css/style.css">
+  <style>
+    /* ── Animations ─────────────────────────────── */
+    @keyframes fadeInUp  { from{opacity:0;transform:translateY(12px)} to{opacity:1;transform:translateY(0)} }
+    @keyframes pulse     { 0%,100%{transform:scale(1)} 50%{transform:scale(1.08)} }
+    @keyframes flameDance{ 0%,100%{transform:rotate(-4deg) scale(1)} 50%{transform:rotate(4deg) scale(1.12)} }
+    @keyframes shimmer   { 0%{background-position:-200% 0} 100%{background-position:200% 0} }
+
+    /* ── Top stats bar ──────────────────────────── */
+    .habit-stats-bar {
+      display: grid; grid-template-columns: repeat(4,1fr); gap: 14px; margin-bottom: 22px;
+    }
+    @media(max-width:700px){ .habit-stats-bar{grid-template-columns:repeat(2,1fr)} }
+    .hstat {
+      background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.08);
+      border-radius: 16px; padding: 18px 16px; position: relative; overflow: hidden;
+      animation: fadeInUp .3s ease;
+    }
+    .hstat::before {
+      content:''; position:absolute; top:0; left:0; width:100%; height:3px;
+    }
+    .hstat.hs-total::before  { background: var(--p); }
+    .hstat.hs-done::before   { background: var(--success); }
+    .hstat.hs-streak::before { background: #f59e0b; }
+    .hstat.hs-pct::before    { background: #06b6d4; }
+    .hstat-icon  { font-size:1.4rem; margin-bottom:6px; display:block; }
+    .hstat-val   { font-size:2rem; font-weight:800; line-height:1; color:var(--tx); }
+    .hstat-lbl   { font-size:.75rem; text-transform:uppercase; letter-spacing:.05em; color:var(--tx3); margin-top:4px; }
+
+    /* ── AI Insight card ───────────────────────── */
+    .ai-insight-card {
+      position:relative; background:rgba(139,92,246,0.06);
+      border:1px solid rgba(139,92,246,0.2); border-left:4px solid var(--p);
+      border-radius:16px; padding:20px 22px; margin-bottom:22px;
+      animation:fadeInUp .35s ease;
+    }
+    .ai-badge {
+      position:absolute; top:14px; right:14px;
+      background:rgba(139,92,246,0.18); color:var(--p);
+      border:1px solid rgba(139,92,246,0.3); border-radius:20px;
+      padding:3px 10px; font-size:.72rem; font-weight:600; letter-spacing:.04em;
+    }
+    .ai-insight-text { color:var(--tx2); font-size:.88rem; line-height:1.8; margin-top:8px; white-space:pre-line; }
+    .ai-loading { display:flex; align-items:center; gap:10px; color:var(--tx3); font-size:.85rem; padding:4px 0; }
+    .ai-error   { background:rgba(245,158,11,.08); border:1px solid rgba(245,158,11,.25); border-radius:10px;
+                  padding:10px 14px; color:var(--warning); font-size:.83rem;
+                  display:flex; align-items:center; justify-content:space-between; gap:10px; }
+
+    /* ── Add form ───────────────────────────────── */
+    .add-habit-card {
+      background:rgba(255,255,255,0.03); border:1px solid rgba(255,255,255,0.08);
+      border-radius:16px; padding:20px; margin-bottom:22px;
+    }
+    .add-habit-row { display:grid; grid-template-columns:1fr auto auto; gap:10px; align-items:flex-end; }
+    @media(max-width:600px){ .add-habit-row{grid-template-columns:1fr;} }
+    .category-select { min-width:130px; }
+
+    /* ── Filter/Search bar ──────────────────────── */
+    .habit-toolbar {
+      display:flex; gap:10px; align-items:center; margin-bottom:14px; flex-wrap:wrap;
+    }
+    .habit-search {
+      flex:1; min-width:160px; background:rgba(255,255,255,0.05);
+      border:1px solid rgba(255,255,255,0.1); border-radius:10px;
+      padding:8px 14px; color:var(--tx); font-size:.88rem; outline:none;
+      transition:border-color .2s;
+    }
+    .habit-search:focus { border-color:var(--p); }
+    .filter-btn {
+      padding:8px 14px; border-radius:10px; border:1px solid rgba(255,255,255,0.1);
+      background:rgba(255,255,255,0.04); color:var(--tx2); font-size:.82rem;
+      cursor:pointer; transition:all .2s; white-space:nowrap;
+    }
+    .filter-btn.active, .filter-btn:hover { background:rgba(139,92,246,0.15); border-color:var(--p); color:var(--p); }
+
+    /* ── Habit item ─────────────────────────────── */
+    .habit-item {
+      display:flex; align-items:center; gap:14px;
+      background:rgba(255,255,255,0.03); border:1px solid rgba(255,255,255,0.07);
+      border-radius:14px; padding:14px 16px; margin-bottom:10px;
+      transition:all .2s; animation:fadeInUp .25s ease;
+      position:relative; overflow:hidden;
+    }
+    .habit-item:hover { background:rgba(255,255,255,0.055); border-color:rgba(255,255,255,0.13); }
+    .habit-item.done-today { border-color:rgba(16,185,129,0.2); background:rgba(16,185,129,0.04); }
+
+    .habit-check {
+      width:38px; height:38px; border-radius:50%; border:2px solid rgba(255,255,255,0.18);
+      background:transparent; cursor:pointer; font-size:1.1rem; color:var(--success);
+      display:flex; align-items:center; justify-content:center; flex-shrink:0;
+      transition:all .2s;
+    }
+    .habit-check:hover  { border-color:var(--success); background:rgba(16,185,129,0.1); }
+    .habit-check.done   { background:var(--success); border-color:var(--success); color:#fff; animation:pulse .3s ease; }
+
+    .habit-info { flex:1; min-width:0; }
+    .habit-name { font-weight:600; font-size:.95rem; color:var(--tx); margin-bottom:4px;
+                  transition:all .2s; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+    .habit-item.done-today .habit-name { opacity:.5; text-decoration:line-through; }
+
+    .habit-meta { display:flex; align-items:center; gap:12px; flex-wrap:wrap; }
+    .habit-streak { display:flex; align-items:center; gap:4px; font-size:.8rem; color:#f59e0b; font-weight:600; }
+    .flame { display:inline-block; animation:flameDance 1.2s ease-in-out infinite; }
+    .habit-cat { font-size:.72rem; padding:2px 8px; border-radius:20px;
+                 background:rgba(139,92,246,0.12); color:var(--p); border:1px solid rgba(139,92,246,0.2); }
+    .habit-week-pct { font-size:.78rem; color:var(--tx3); }
+
+    .habit-progress { margin-top:7px; }
+    .progress-wrap  { height:4px; background:rgba(255,255,255,0.07); border-radius:4px; overflow:hidden; }
+    .progress-bar   { height:100%; border-radius:4px; transition:width .6s ease;
+                      background:var(--p); }
+    .progress-bar.green { background:var(--success); }
+    .progress-bar.amber { background:var(--warning); }
+    .progress-bar.red   { background:var(--danger); }
+
+    .habit-actions { display:flex; gap:6px; flex-shrink:0; }
+    .btn-icon { width:32px; height:32px; border-radius:8px; border:1px solid rgba(255,255,255,0.1);
+                background:transparent; color:var(--tx3); cursor:pointer; font-size:.9rem;
+                display:flex; align-items:center; justify-content:center; transition:all .2s; }
+    .btn-icon:hover { background:rgba(239,68,68,0.12); border-color:rgba(239,68,68,0.3); color:var(--danger); }
+
+    /* ── Empty state ─────────────────────────────── */
+    .empty-state { text-align:center; padding:48px 20px; color:var(--tx3); }
+    .empty-state .empty-icon { font-size:2.5rem; margin-bottom:12px; }
+    .empty-state h3 { color:var(--tx2); margin-bottom:8px; }
+  </style>
 </head>
 <body>
 <div id="fs-loading"><div class="fs-spinner"></div><span class="loading-text">Analyzing habits…</span></div>
@@ -18,67 +143,87 @@
     <header id="fs-header" class="header"></header>
     <main class="main-content">
 
+      <!-- Page header -->
       <div class="page-header">
         <div class="page-header-text">
-          <h1>HabitSync</h1>
-          <p>Smart habit tracking with consistency analysis and streaks</p>
+          <h1>🔥 HabitSync</h1>
+          <p>Build powerful habits with streaks, consistency tracking, and AI coaching</p>
         </div>
-        <div id="habit-header-meta" class="page-header-actions"></div>
-      </div>
-
-      <!-- Score + Stats -->
-      <div class="prod-score-card" id="habit-score-card" style="display:none">
-        <div id="habit-gauge"></div>
-        <div class="prod-score-right">
-          <div class="prod-score-title">HABIT SCORE</div>
-          <div class="prod-score-val" id="hs-score"></div>
-          <div class="prod-score-sub" id="hs-label"></div>
-          <div class="prod-metric-row">
-            <div class="prod-metric">
-              <div class="val" id="hs-consistency">%</div>
-              <div class="lbl">Consistency</div>
-            </div>
-            <div class="prod-metric">
-              <div class="val" id="hs-streak"></div>
-              <div class="lbl">Best Streak</div>
-            </div>
-            <div class="prod-metric">
-              <div class="val" id="hs-done">/</div>
-              <div class="lbl">Done Today</div>
-            </div>
-            <div class="prod-metric">
-              <div class="val" id="hs-strong"></div>
-              <div class="lbl">Strong Habits</div>
-            </div>
-          </div>
+        <div class="page-header-actions">
+          <span id="habit-header-meta" style="font-size:.85rem;color:var(--tx3)"></span>
         </div>
       </div>
 
-      <!-- Intelligence panel -->
-      <div class="intel-panel" id="habit-insights-panel" style="display:none">
-        <div class="intel-header">
-          <h2><i data-lucide="brain" style="width:18px;height:18px;display:inline-block;vertical-align:middle;"></i> Intelligence Insights</h2>
-          <span class="intel-badge" id="hi-badge"></span>
+      <!-- Stats bar -->
+      <div class="habit-stats-bar" id="habit-stats-bar" style="display:none">
+        <div class="hstat hs-total">
+          <span class="hstat-icon">📋</span>
+          <div class="hstat-val" id="hs-total">0</div>
+          <div class="hstat-lbl">Total Habits</div>
         </div>
-        <div id="habit-insights"></div>
+        <div class="hstat hs-done">
+          <span class="hstat-icon">✅</span>
+          <div class="hstat-val" id="hs-done">0/0</div>
+          <div class="hstat-lbl">Done Today</div>
+        </div>
+        <div class="hstat hs-streak">
+          <span class="hstat-icon"><span class="flame">🔥</span></span>
+          <div class="hstat-val" id="hs-streak">0</div>
+          <div class="hstat-lbl">Best Streak (days)</div>
+        </div>
+        <div class="hstat hs-pct">
+          <span class="hstat-icon">📊</span>
+          <div class="hstat-val" id="hs-pct">0%</div>
+          <div class="hstat-lbl">Avg Consistency</div>
+        </div>
       </div>
 
-      <!-- Add habit -->
-      <div class="card" style="margin-bottom:20px">
-        <div class="card-title"><span>Add New Habit</span></div>
+      <!-- AI Insight -->
+      <div id="ai-panel" style="display:none">
+        <div class="ai-insight-card">
+          <span class="ai-badge">✨ Gemini AI</span>
+          <div style="font-weight:700;font-size:.9rem;color:var(--tx);margin-bottom:6px">🧠 Habit Intelligence</div>
+          <div id="habit-ai-content" class="ai-insight-text"></div>
+        </div>
+      </div>
+
+      <!-- Add habit form -->
+      <div class="add-habit-card">
+        <div style="font-weight:700;font-size:.95rem;margin-bottom:14px;color:var(--tx)">➕ Add New Habit</div>
         <form id="add-form" novalidate>
-          <div style="display:flex;gap:10px;align-items:flex-end">
-            <div class="form-group" style="flex:1;margin-bottom:0">
-              <label for="habit-name">Habit name</label>
-              <input type="text" id="habit-name" class="form-control" placeholder="e.g. Read for 20 minutes, Meditate, Exercise…" maxlength="200" required>
+          <div class="add-habit-row">
+            <div class="form-group" style="margin-bottom:0">
+              <label for="habit-name">Habit Name</label>
+              <input type="text" id="habit-name" class="form-control"
+                     placeholder="e.g. Read 20 minutes, Meditate, Exercise…" maxlength="200" required>
             </div>
-            <button type="submit" id="btn-add" class="btn btn-primary">+ Add</button>
+            <div class="form-group category-select" style="margin-bottom:0">
+              <label for="habit-cat">Category</label>
+              <select id="habit-cat" class="form-control">
+                <option value="General">General</option>
+                <option value="Health">💪 Health</option>
+                <option value="Learning">📚 Learning</option>
+                <option value="Mindfulness">🧘 Mindfulness</option>
+                <option value="Productivity">⚡ Productivity</option>
+                <option value="Social">👥 Social</option>
+                <option value="Finance">💰 Finance</option>
+              </select>
+            </div>
+            <button type="submit" id="btn-add" class="btn btn-primary" style="margin-bottom:0">+ Add</button>
           </div>
           <div id="add-error" class="alert alert-danger" style="display:none;margin-top:10px"></div>
         </form>
       </div>
 
-      <!-- Habits list -->
+      <!-- Toolbar -->
+      <div class="habit-toolbar">
+        <input type="text" class="habit-search" id="habit-search" placeholder="🔍 Search habits…" oninput="filterHabits()">
+        <button class="filter-btn active" id="filter-all" onclick="setFilter('all')">All</button>
+        <button class="filter-btn" id="filter-pending" onclick="setFilter('pending')">Pending</button>
+        <button class="filter-btn" id="filter-done" onclick="setFilter('done')">Done Today</button>
+        <button class="btn btn-secondary" id="btn-bulk" style="font-size:.82rem;padding:8px 14px" onclick="bulkComplete()">✓ Complete All</button>
+      </div>
+
       <div class="section-title">
         <span>Your Habits</span>
         <span id="habit-count-badge"></span>
@@ -97,10 +242,77 @@
   if (!user) return;
   FS.initLayout(user, 'habits');
 
+  let allHabits = [];
+  let currentFilter = 'all';
+
+  function setFilter(f) {
+    currentFilter = f;
+    ['all','pending','done'].forEach(x => {
+      document.getElementById('filter-'+x).classList.toggle('active', x === f);
+    });
+    renderHabits();
+  }
+  window.setFilter = setFilter;
+
+  function filterHabits() { renderHabits(); }
+  window.filterHabits = filterHabits;
+
+  function renderHabits() {
+    const q = document.getElementById('habit-search').value.toLowerCase();
+    let list = allHabits.filter(h => {
+      if (q && !h.name.toLowerCase().includes(q)) return false;
+      if (currentFilter === 'pending') return !h.done_today;
+      if (currentFilter === 'done')    return h.done_today;
+      return true;
+    });
+
+    const cont = document.getElementById('habits-container');
+    if (!list.length) {
+      cont.innerHTML = `<div class="empty-state">
+        <div class="empty-icon">🔍</div>
+        <h3>${allHabits.length ? 'No habits match your filter' : 'No habits yet'}</h3>
+        <p>${allHabits.length ? 'Try a different filter or search term.' : 'Add your first habit above. Start small — even "drink 8 glasses of water" counts.'}</p>
+      </div>`;
+      return;
+    }
+
+    const barCls = pct => pct >= 70 ? 'green' : pct < 40 ? 'red' : 'amber';
+    cont.innerHTML = list.map(h => {
+      const pct = h.pct_week || 0;
+      const cat = h.category || 'General';
+      return `
+      <div class="habit-item ${h.done_today ? 'done-today' : ''}" id="h${h.id}">
+        <button class="habit-check ${h.done_today ? 'done' : ''}"
+                onclick="markDone(${h.id}, ${h.done_today ? 1 : 0})"
+                title="${h.done_today ? '✓ Done today' : 'Mark complete'}"
+                aria-label="Mark complete">
+          ${h.done_today ? '✓' : ''}
+        </button>
+        <div class="habit-info">
+          <div class="habit-name">${FS.escape(h.name)}</div>
+          <div class="habit-meta">
+            ${h.streak > 0 ? `<span class="habit-streak"><span class="flame">🔥</span> ${h.streak} day${h.streak>1?'s':''}</span>` : ''}
+            <span class="habit-cat">${cat}</span>
+            <span class="habit-week-pct">${pct}% this week</span>
+            ${h.last_completed ? `<span style="font-size:.75rem;color:var(--tx3)">Last: ${FS.relDate(h.last_completed)}</span>` : ''}
+          </div>
+          <div class="habit-progress">
+            <div class="progress-wrap">
+              <div class="progress-bar ${barCls(pct)}" style="width:${pct}%"></div>
+            </div>
+          </div>
+        </div>
+        <div class="habit-actions">
+          <button class="btn-icon" onclick="deleteHabit(${h.id},'${FS.escape(h.name)}')" title="Delete habit">✕</button>
+        </div>
+      </div>`;
+    }).join('');
+  }
+
   async function loadHabits() {
     const cont = document.getElementById('habits-container');
-    cont.innerHTML = '<div style="display:flex;flex-direction:column;gap:8px">' +
-      [1,2,3].map(() => '<div class="skeleton" style="height:72px;border-radius:var(--r3)"></div>').join('') + '</div>';
+    cont.innerHTML = '<div style="display:flex;flex-direction:column;gap:10px">' +
+      [1,2,3].map(() => '<div class="skeleton" style="height:78px;border-radius:14px"></div>').join('') + '</div>';
 
     const res = await FS.api('/api/habits/index.php');
     if (!res.ok) {
@@ -108,84 +320,56 @@
       return;
     }
 
-    const habits = res.data.habits || [];
+    allHabits = res.data.habits || [];
+    const doneCount = allHabits.filter(h => h.done_today).length;
+
+    document.getElementById('habit-header-meta').textContent = `${doneCount}/${allHabits.length} done today`;
     document.getElementById('habit-count-badge').innerHTML =
-      `<span class="badge badge-primary">${habits.length} habit${habits.length !== 1 ? 's' : ''}</span>`;
-    document.getElementById('habit-header-meta').innerHTML =
-      habits.filter(h => h.done_today).length + '/' + habits.length + ' done today';
+      `<span class="badge badge-primary">${allHabits.length} habit${allHabits.length!==1?'s':''}</span>`;
 
-    // Intelligence
-    const intel = Intel.habits(habits);
+    // Stats bar
+    if (allHabits.length) {
+      const intel = Intel.habits(allHabits);
+      document.getElementById('habit-stats-bar').style.display = 'grid';
+      document.getElementById('hs-total').textContent   = allHabits.length;
+      document.getElementById('hs-done').textContent    = `${doneCount}/${allHabits.length}`;
+      document.getElementById('hs-streak').textContent  = intel?.metrics?.maxStreak || 0;
+      document.getElementById('hs-pct').textContent     = (intel?.metrics?.avgConsistency || 0) + '%';
 
-    if (intel && habits.length) {
-      // Score gauge
-      document.getElementById('habit-score-card').style.display = 'flex';
-      Intel.renderScoreGauge(intel.score, 'Score', document.getElementById('habit-gauge'));
-      document.getElementById('hs-score').textContent       = intel.score + '/100';
-      const tier = intel.score >= 80 ? 'Elite consistency' : intel.score >= 65 ? 'Strong' : intel.score >= 50 ? 'Building' : 'Needs work';
-      document.getElementById('hs-label').textContent       = tier;
-      document.getElementById('hs-consistency').textContent = intel.metrics.avgConsistency + '%';
-      document.getElementById('hs-streak').textContent      = intel.metrics.maxStreak + ' days';
-      document.getElementById('hs-done').textContent        = intel.metrics.doneToday + '/' + intel.metrics.total;
-      document.getElementById('hs-strong').textContent      = intel.metrics.strong;
+      // AI insight
+      document.getElementById('ai-panel').style.display = 'block';
+      document.getElementById('habit-ai-content').innerHTML =
+        '<div class="ai-loading"><div class="fs-spinner" style="width:14px;height:14px;border-width:2px;border-top-color:var(--p)"></div><span>Gemini AI is analyzing your habits…</span></div>';
 
-      // Insights panel
-      document.getElementById('habit-insights-panel').style.display = 'block';
-      const badge = document.getElementById('hi-badge');
-      badge.textContent  = intel.score >= 65 ? 'On Track' : 'Needs Attention';
-      badge.className = 'intel-badge badge-' + (intel.score >= 65 ? 'success' : intel.score >= 45 ? 'warn' : 'danger');
-      Intel.renderInsights(intel.insights, document.getElementById('habit-insights'));
+      FS.api('/api/ai/insight.php', 'POST', { module: 'habits', data: intel.metrics }).then(aiRes => {
+        if (aiRes.ok && aiRes.data.insight) {
+          document.getElementById('habit-ai-content').textContent = aiRes.data.insight;
+        } else {
+          document.getElementById('habit-ai-content').innerHTML =
+            '<div class="ai-error"><span>⚠️ Could not load AI insight.</span><button class="btn btn-sm btn-secondary" onclick="loadHabits()">Retry</button></div>';
+        }
+      });
     }
 
-    // Build per-habit feedback map
-    const fbMap = {};
-    intel?.perHabit?.forEach(p => { fbMap[p.id] = p; });
-
-    if (!habits.length) {
-      cont.innerHTML = `<div class="empty-state">
-        <div class="empty-icon"><i data-lucide="check-circle" style="width:18px;height:18px;display:inline-block;vertical-align:middle;"></i></div>
-        <h3>No habits yet</h3>
-        <p>Add your first habit above. Start small even "drink a glass of water" counts.</p>
-      </div>`;
-      return;
-    }
-
-    // Color for feedback
-    const fbClass = pct => pct >= 80 ? 'fb-good' : pct >= 50 ? 'fb-warn' : 'fb-danger';
-
-    cont.innerHTML = '<div class="habit-list">' + habits.map(h => {
-      const fb  = fbMap[h.id];
-      const pct = h.pct_week || 0;
-      return `
-        <div class="habit-item" id="h${h.id}">
-          <button class="habit-check ${h.done_today ? 'done' : ''}"
-                  onclick="markDone(${h.id}, ${h.done_today ? 1 : 0})"
-                  title="${h.done_today ? '✓ Done today' : 'Mark complete'}" aria-label="Mark complete">
-            ${h.done_today ? '✓' : ''}
-          </button>
-          <div class="habit-info">
-            <div class="habit-name" style="${h.done_today ? 'opacity:.55;text-decoration:line-through' : ''}">${FS.escape(h.name)}</div>
-            <div class="habit-meta">
-              <span class="streak"><i data-lucide="flame" style="width:18px;height:18px;display:inline-block;vertical-align:middle;"></i> ${h.streak} day streak</span>
-              <span>${pct}% this week</span>
-              ${h.last_completed ? `<span>Last: ${FS.relDate(h.last_completed)}</span>` : ''}
-            </div>
-            ${fb ? `<div class="habit-feedback ${fbClass(pct)}">${FS.escape(fb.feedback)}</div>` : ''}
-            <div class="progress-wrap" style="margin-top:6px;max-width:240px">
-              <div class="progress-bar ${pct>=70?'green':pct<40?'red':''}" style="width:${pct}%"></div>
-            </div>
-          </div>
-          <div class="habit-actions">
-            <button class="btn btn-danger btn-sm" onclick="deleteHabit(${h.id},'${FS.escape(h.name)}')" title="Delete">✕</button>
-          </div>
-        </div>`;
-    }).join('') + '</div>';
+    renderHabits();
   }
+
+  window.bulkComplete = async function () {
+    const pending = allHabits.filter(h => !h.done_today);
+    if (!pending.length) { FS.toast('All habits already done! 🎉', 'success'); return; }
+    let done = 0;
+    for (const h of pending) {
+      const r = await FS.api('/api/habits/update.php', 'POST', { habit_id: h.id });
+      if (r.ok) done++;
+    }
+    FS.toast(`✅ Completed ${done} habit${done>1?'s':''}!`, 'success');
+    loadHabits();
+  };
 
   window.markDone = async function (id, done) {
     if (done) { FS.toast('Already done today! Come back tomorrow. 💪', 'info'); return; }
     const res = await FS.api('/api/habits/update.php', 'POST', { habit_id: id });
-    if (res.ok) { FS.toast(`🎉 Habit complete! Streak updated to ${res.data.streak} days.`, 'success'); loadHabits(); }
+    if (res.ok) { FS.toast(`🎉 Habit complete! Streak: ${res.data.streak} days.`, 'success'); loadHabits(); }
     else FS.toast(res.data.error || 'Failed', 'danger');
   };
 
@@ -200,13 +384,14 @@
     e.preventDefault();
     const errEl = document.getElementById('add-error');
     errEl.style.display = 'none';
-    const name = document.getElementById('habit-name').value.trim();
+    const name     = document.getElementById('habit-name').value.trim();
+    const category = document.getElementById('habit-cat').value;
     if (!name) { errEl.textContent = 'Habit name required.'; errEl.style.display = 'flex'; return; }
     const btn = document.getElementById('btn-add');
     btn.disabled = true; btn.textContent = 'Adding…';
-    const res = await FS.api('/api/habits/add.php', 'POST', { name });
+    const res = await FS.api('/api/habits/add.php', 'POST', { name, category });
     if (res.ok) {
-      FS.toast('Habit added! Start your streak today. <i data-lucide="check-circle" style="width:18px;height:18px;display:inline-block;vertical-align:middle;"></i>', 'success');
+      FS.toast('Habit added! Start your streak today. 🔥', 'success');
       document.getElementById('habit-name').value = '';
       loadHabits();
     } else {

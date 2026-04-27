@@ -3,10 +3,118 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta name="description" content="DecisionLog Track decisions and get intelligent success rate analysis.">
-  <title>DecisionLog FlowStack</title>
+  <meta name="description" content="DecisionLog — Track decisions, detect patterns, and improve judgment with AI coaching.">
+  <title>DecisionLog · FlowStack</title>
   <link rel="stylesheet" href="assets/css/app.css">
   <link rel="stylesheet" href="assets/css/style.css">
+  <style>
+    @keyframes fadeInUp  { from{opacity:0;transform:translateY(12px)} to{opacity:1;transform:translateY(0)} }
+    @keyframes slideInTop{ from{opacity:0;transform:translateY(-14px)} to{opacity:1;transform:translateY(0)} }
+
+    /* Stats row */
+    .dec-stats { display:grid; grid-template-columns:repeat(4,1fr); gap:14px; margin-bottom:22px; }
+    @media(max-width:700px){ .dec-stats{grid-template-columns:repeat(2,1fr)} }
+    .dec-stat {
+      background:rgba(255,255,255,0.04); border:1px solid rgba(255,255,255,0.08);
+      border-radius:16px; padding:18px 16px; position:relative; overflow:hidden;
+      animation:fadeInUp .3s ease;
+    }
+    .dec-stat::before { content:''; position:absolute; top:0; left:0; width:100%; height:3px; }
+    .dec-stat.total::before   { background:var(--p); }
+    .dec-stat.good::before    { background:var(--success); }
+    .dec-stat.bad::before     { background:var(--danger); }
+    .dec-stat.neutral::before { background:var(--tx3); }
+    .dec-stat-icon { font-size:1.3rem; margin-bottom:4px; display:block; }
+    .dec-stat-val  { font-size:2rem; font-weight:800; line-height:1; }
+    .dec-stat-lbl  { font-size:.75rem; text-transform:uppercase; letter-spacing:.05em; color:var(--tx3); margin-top:4px; }
+
+    /* Win-rate card */
+    .winrate-card {
+      display:flex; align-items:center; gap:24px; flex-wrap:wrap;
+      background:rgba(255,255,255,0.04); border:1px solid rgba(255,255,255,0.08);
+      border-radius:16px; padding:22px 24px; margin-bottom:22px;
+      animation:fadeInUp .3s ease;
+    }
+    .winrate-title { font-size:.72rem; text-transform:uppercase; letter-spacing:.08em; color:var(--tx3); margin-bottom:4px; }
+    .winrate-val   { font-size:2.2rem; font-weight:800; color:var(--tx); line-height:1.1; }
+    .winrate-tier  { font-size:.83rem; color:var(--tx2); margin:4px 0 14px; }
+    .outcome-rows  { display:flex; flex-direction:column; gap:7px; }
+    .outcome-row   { display:flex; align-items:center; gap:8px; font-size:.8rem; }
+    .outcome-lbl   { width:52px; color:var(--tx3); }
+    .outcome-bar   { flex:1; height:5px; background:rgba(255,255,255,0.08); border-radius:4px; overflow:hidden; }
+    .outcome-fill  { height:100%; border-radius:4px; transition:width .6s ease; }
+    .outcome-cnt   { width:20px; text-align:right; color:var(--tx2); }
+
+    /* AI card */
+    .ai-insight-card {
+      position:relative; background:rgba(139,92,246,0.06);
+      border:1px solid rgba(139,92,246,0.2); border-left:4px solid var(--p);
+      border-radius:16px; padding:20px 22px; margin-bottom:22px;
+      animation:fadeInUp .35s ease;
+    }
+    .ai-badge {
+      position:absolute; top:14px; right:14px;
+      background:rgba(139,92,246,0.18); color:var(--p);
+      border:1px solid rgba(139,92,246,0.3); border-radius:20px;
+      padding:3px 10px; font-size:.72rem; font-weight:600;
+    }
+    .ai-structured { display:flex; flex-direction:column; gap:10px; margin-top:10px; }
+    .ai-section    { background:rgba(255,255,255,0.03); border-radius:10px; padding:10px 14px; }
+    .ai-section-label { font-size:.72rem; font-weight:700; text-transform:uppercase;
+                        letter-spacing:.06em; color:var(--p); margin-bottom:4px; }
+    .ai-section-text  { font-size:.87rem; color:var(--tx2); line-height:1.7; white-space:pre-line; }
+    .ai-loading { display:flex; align-items:center; gap:10px; color:var(--tx3); font-size:.85rem; }
+    .ai-error   { background:rgba(245,158,11,.08); border:1px solid rgba(245,158,11,.25); border-radius:10px;
+                  padding:10px 14px; color:var(--warning); font-size:.83rem;
+                  display:flex; align-items:center; justify-content:space-between; gap:10px; }
+
+    /* Log form */
+    .log-card {
+      background:rgba(255,255,255,0.03); border:1px solid rgba(255,255,255,0.08);
+      border-radius:16px; padding:20px; margin-bottom:22px;
+    }
+    .log-form-row { display:flex; gap:12px; align-items:flex-end; flex-wrap:wrap; }
+    .log-form-row .form-group { flex:1; min-width:150px; margin-bottom:0; }
+
+    /* Outcome outcome-badge */
+    .outcome-badge {
+      display:inline-flex; align-items:center; gap:5px;
+      padding:3px 10px; border-radius:20px; font-size:.75rem; font-weight:600;
+    }
+    .outcome-badge.good    { background:rgba(16,185,129,0.15); color:var(--success); border:1px solid rgba(16,185,129,0.25); }
+    .outcome-badge.bad     { background:rgba(239,68,68,0.15);  color:var(--danger);  border:1px solid rgba(239,68,68,0.25); }
+    .outcome-badge.neutral { background:rgba(148,163,184,0.12);color:var(--tx3);    border:1px solid rgba(148,163,184,0.2); }
+
+    /* Decision cards (replace table on mobile) */
+    .dec-card {
+      background:rgba(255,255,255,0.03); border:1px solid rgba(255,255,255,0.07);
+      border-radius:13px; padding:14px 16px; margin-bottom:10px;
+      display:flex; align-items:flex-start; gap:14px;
+      animation:fadeInUp .25s ease; transition:background .2s;
+    }
+    .dec-card:hover { background:rgba(255,255,255,0.05); }
+    .dec-card.new-entry { animation:slideInTop .35s ease; }
+    .dec-card-body { flex:1; min-width:0; }
+    .dec-card-text { font-size:.9rem; color:var(--tx); line-height:1.5; margin-bottom:8px; }
+    .dec-card-meta { display:flex; align-items:center; gap:10px; flex-wrap:wrap; }
+    .dec-card-date { font-size:.78rem; color:var(--tx3); }
+    .btn-icon { width:30px; height:30px; border-radius:8px; border:1px solid rgba(255,255,255,0.1);
+                background:transparent; color:var(--tx3); cursor:pointer; font-size:.85rem;
+                display:flex; align-items:center; justify-content:center; transition:all .2s; flex-shrink:0; }
+    .btn-icon:hover { background:rgba(239,68,68,0.12); border-color:rgba(239,68,68,0.3); color:var(--danger); }
+
+    /* Filter bar */
+    .dec-toolbar { display:flex; gap:10px; align-items:center; margin-bottom:14px; flex-wrap:wrap; }
+    .filter-btn  { padding:7px 14px; border-radius:10px; border:1px solid rgba(255,255,255,0.1);
+                   background:rgba(255,255,255,0.04); color:var(--tx2); font-size:.82rem;
+                   cursor:pointer; transition:all .2s; }
+    .filter-btn.active, .filter-btn:hover { background:rgba(139,92,246,0.15); border-color:var(--p); color:var(--p); }
+
+    .empty-state { text-align:center; padding:52px 20px; color:var(--tx3);
+                   background:rgba(255,255,255,0.02); border:1px dashed rgba(255,255,255,0.1);
+                   border-radius:16px; }
+    .empty-state h3 { color:var(--tx2); margin-bottom:8px; }
+  </style>
 </head>
 <body>
 <div id="fs-loading"><div class="fs-spinner"></div><span class="loading-text">Loading decisions…</span></div>
@@ -20,71 +128,94 @@
 
       <div class="page-header">
         <div class="page-header-text">
-          <h1>DecisionLog</h1>
-          <p>Record every decision detect patterns, improve your judgment quality</p>
+          <h1>🧠 DecisionLog</h1>
+          <p>Record every decision — detect patterns, measure judgment quality, get AI coaching</p>
         </div>
       </div>
 
-      <!-- Win rate card -->
-      <div class="win-rate-card" id="winrate-card" style="display:none">
-        <div id="decision-gauge"></div>
-        <div class="win-rate-right">
-          <div class="prod-score-title">DECISION WIN RATE</div>
-          <div class="prod-score-val" id="wr-val"></div>
-          <div class="prod-score-sub" id="wr-sub"></div>
-          <div class="outcome-bars" id="outcome-bars"></div>
+      <!-- Stats -->
+      <div class="dec-stats">
+        <div class="dec-stat total"><span class="dec-stat-icon">📝</span><div class="dec-stat-val" id="s-total">—</div><div class="dec-stat-lbl">Total</div></div>
+        <div class="dec-stat good"><span class="dec-stat-icon">✅</span><div class="dec-stat-val" id="s-good" style="color:var(--success)">—</div><div class="dec-stat-lbl">Good</div></div>
+        <div class="dec-stat bad"><span class="dec-stat-icon">❌</span><div class="dec-stat-val" id="s-bad" style="color:var(--danger)">—</div><div class="dec-stat-lbl">Bad</div></div>
+        <div class="dec-stat neutral"><span class="dec-stat-icon">⚪</span><div class="dec-stat-val" id="s-neutral">—</div><div class="dec-stat-lbl">Neutral</div></div>
+      </div>
+
+      <!-- Win-rate ring (5+) -->
+      <div id="winrate-wrap" style="display:none">
+        <div class="winrate-card">
+          <svg width="110" height="110" viewBox="0 0 110 110" style="transform:rotate(-90deg);flex-shrink:0">
+            <circle cx="55" cy="55" r="44" fill="none" stroke="rgba(255,255,255,0.07)" stroke-width="10"/>
+            <circle cx="55" cy="55" r="44" fill="none" stroke="var(--p)" stroke-width="10"
+              stroke-linecap="round" stroke-dasharray="276.46" stroke-dashoffset="276.46"
+              id="win-ring-arc" style="transition:stroke-dashoffset .8s ease"/>
+            <text x="55" y="-42" text-anchor="middle" fill="var(--tx)" font-size="18" font-weight="800"
+                  transform="rotate(90,55,55)" id="win-ring-pct">0%</text>
+            <text x="55" y="-27" text-anchor="middle" fill="var(--tx3)" font-size="9"
+                  transform="rotate(90,55,55)">win rate</text>
+          </svg>
+          <div style="flex:1;min-width:160px">
+            <div class="winrate-title">Decision Win Rate</div>
+            <div class="winrate-val" id="wr-val">—</div>
+            <div class="winrate-tier" id="wr-tier">—</div>
+            <div class="outcome-rows" id="outcome-rows"></div>
+          </div>
         </div>
       </div>
 
-      <!-- Intelligence panel -->
-      <div class="intel-panel" id="dec-intel-panel" style="display:none">
-        <div class="intel-header">
-          <h2><i data-lucide="brain" style="width:18px;height:18px;display:inline-block;vertical-align:middle;"></i> Decision Intelligence</h2>
-          <span class="intel-badge" id="dec-badge"></span>
+      <!-- AI Insight -->
+      <div id="ai-wrap" style="display:none">
+        <div class="ai-insight-card">
+          <span class="ai-badge">✨ Gemini AI</span>
+          <div style="font-weight:700;font-size:.9rem;color:var(--tx)">🧠 Decision Intelligence</div>
+          <div id="ai-body"></div>
         </div>
-        <div id="dec-insights"></div>
       </div>
 
-      <!-- Add decision -->
-      <div class="card" style="margin-bottom:20px">
-        <div class="card-title"><span>Log a Decision</span></div>
+      <!-- Log form -->
+      <div class="log-card">
+        <div style="font-weight:700;font-size:.95rem;margin-bottom:14px;color:var(--tx)">📝 Log a Decision</div>
         <form id="add-form" novalidate>
           <div class="form-group">
             <label for="decision-text">What decision did you make?</label>
             <textarea id="decision-text" class="form-control" rows="3"
-              placeholder="Be specific the more detail, the more patterns you'll detect over time…" required></textarea>
+              placeholder="Be specific — more detail = better pattern detection over time…" required></textarea>
           </div>
-          <div style="display:flex;gap:10px;align-items:flex-end;flex-wrap:wrap">
-            <div class="form-group" style="flex:1;margin-bottom:0;min-width:160px">
-              <label for="outcome">How did / will it turn out?</label>
+          <div class="log-form-row">
+            <div class="form-group">
+              <label for="outcome">Outcome</label>
               <select id="outcome" class="form-control">
-                <option value="good"><i data-lucide="check-circle" style="width:18px;height:18px;display:inline-block;vertical-align:middle;"></i> Good I'd make it again</option>
-                <option value="neutral" selected>⚪ Neutral unclear yet</option>
-                <option value="bad">❌ Bad I'd do differently</option>
+                <option value="good">✅ Good — I'd make it again</option>
+                <option value="neutral" selected>⚪ Neutral — unclear yet</option>
+                <option value="bad">❌ Bad — I'd do differently</option>
               </select>
             </div>
-            <button type="submit" id="btn-add" class="btn btn-primary" style="margin-bottom:0">+ Log Decision</button>
+            <div class="form-group">
+              <label for="category">Category</label>
+              <select id="category" class="form-control">
+                <option value="General">General</option>
+                <option value="Career">💼 Career</option>
+                <option value="Finance">💰 Finance</option>
+                <option value="Health">💪 Health</option>
+                <option value="Relationships">❤️ Relationships</option>
+                <option value="Learning">📚 Learning</option>
+                <option value="Business">🚀 Business</option>
+              </select>
+            </div>
+            <button type="submit" id="btn-add" class="btn btn-primary" style="margin-bottom:0;white-space:nowrap">+ Log</button>
           </div>
           <div id="add-error" class="alert alert-danger" style="display:none;margin-top:10px"></div>
         </form>
       </div>
 
-      <!-- Stats -->
-      <div class="stats-grid" style="margin-bottom:20px">
-        <div class="stat-card"><div class="stat-card-top"><div class="stat-icon indigo">📝</div></div>
-          <div class="stat-value" id="s-total"></div><div class="stat-label">Total Decisions</div></div>
-        <div class="stat-card"><div class="stat-card-top"><div class="stat-icon green"><i data-lucide="check-circle" style="width:18px;height:18px;display:inline-block;vertical-align:middle;"></i></div></div>
-          <div class="stat-value" id="s-good" style="color:var(--success)"></div><div class="stat-label">Good</div></div>
-        <div class="stat-card"><div class="stat-card-top"><div class="stat-icon red">❌</div></div>
-          <div class="stat-value" id="s-bad" style="color:var(--danger)"></div><div class="stat-label">Bad</div></div>
-        <div class="stat-card"><div class="stat-card-top"><div class="stat-icon amber">⚪</div></div>
-          <div class="stat-value" id="s-neutral"></div><div class="stat-label">Neutral</div></div>
-      </div>
-
-      <!-- List -->
-      <div class="section-title">
-        <span>Decision History</span>
-        <span id="d-total" class="badge badge-primary"></span>
+      <!-- History -->
+      <div class="dec-toolbar">
+        <span style="font-weight:700;font-size:.95rem;color:var(--tx)">Decision History</span>
+        <span id="d-total" class="badge badge-primary" style="margin-right:auto"></span>
+        <button class="filter-btn active" id="f-all"     onclick="setFilter('all')">All</button>
+        <button class="filter-btn" id="f-good"    onclick="setFilter('good')">✅ Good</button>
+        <button class="filter-btn" id="f-bad"     onclick="setFilter('bad')">❌ Bad</button>
+        <button class="filter-btn" id="f-neutral" onclick="setFilter('neutral')">⚪ Neutral</button>
       </div>
       <div id="decisions-container"></div>
       <div id="pagination" style="display:flex;gap:6px;margin-top:14px;justify-content:center;flex-wrap:wrap"></div>
@@ -96,97 +227,163 @@
 <script src="assets/js/app.js"></script>
 <script src="assets/js/intelligence.js"></script>
 <script>
+function safeDate(str) {
+  if (!str) return '—';
+  const d = new Date(str.replace(' ', 'T'));
+  return isNaN(d) ? str.split(' ')[0] : (FS.relDate ? FS.relDate(str) : d.toLocaleDateString());
+}
+
+function drawWinRing(pct) {
+  const circ = 2 * Math.PI * 44;
+  const arc  = document.getElementById('win-ring-arc');
+  if (!arc) return;
+  arc.style.strokeDashoffset = circ - (pct / 100) * circ;
+  arc.style.stroke = pct >= 60 ? 'var(--success)' : pct >= 40 ? 'var(--warning)' : 'var(--danger)';
+  const lbl = document.getElementById('win-ring-pct');
+  if (lbl) lbl.textContent = pct + '%';
+}
+
+// Parse structured AI response into sections
+function renderAiStructured(text) {
+  const labels = ['Decision Summary','Pros','Cons','Long-term Impact','Final Suggestion'];
+  const lines  = text.split('\n').filter(l => l.trim());
+  const sections = [];
+  let cur = null;
+  for (const line of lines) {
+    const m = line.match(/^(\d+)\.\s*(.+?):\s*(.*)/);
+    if (m) {
+      if (cur) sections.push(cur);
+      cur = { label: m[2].trim(), text: m[3].trim() };
+    } else if (cur) {
+      cur.text += (cur.text ? '\n' : '') + line.trim();
+    }
+  }
+  if (cur) sections.push(cur);
+
+  if (!sections.length) {
+    return `<p class="ai-section-text" style="margin-top:8px">${FS.escape(text)}</p>`;
+  }
+  const icons = { 'Decision Summary':'📋', 'Pros':'✅', 'Cons':'⚠️', 'Long-term Impact':'🔮', 'Final Suggestion':'🎯' };
+  return '<div class="ai-structured">' + sections.map(s =>
+    `<div class="ai-section">
+      <div class="ai-section-label">${icons[s.label] || '•'} ${FS.escape(s.label)}</div>
+      <div class="ai-section-text">${FS.escape(s.text)}</div>
+    </div>`
+  ).join('') + '</div>';
+}
+
 (async function () {
   const user = await FS.requireAuth();
   if (!user) return;
   FS.initLayout(user, 'decisions');
 
-  let page = 1;
+  let page = 1, activeFilter = 'all', allDecisions = [];
+
+  function setFilter(f) {
+    activeFilter = f;
+    ['all','good','bad','neutral'].forEach(x =>
+      document.getElementById('f-'+x).classList.toggle('active', x === f)
+    );
+    renderList();
+  }
+  window.setFilter = setFilter;
+
+  function renderList() {
+    const list = activeFilter === 'all' ? allDecisions : allDecisions.filter(d => d.outcome === activeFilter);
+    const cont = document.getElementById('decisions-container');
+    if (!list.length) {
+      cont.innerHTML = `<div class="empty-state">
+        <div style="font-size:2.5rem;margin-bottom:12px">🧠</div>
+        <h3>${allDecisions.length ? 'No decisions match this filter.' : 'No decisions yet.'}</h3>
+        <p>${allDecisions.length ? 'Try a different filter.' : 'Use the form above. Patterns emerge after 5+ entries.'}</p>
+      </div>`;
+      return;
+    }
+    const badge = o => `<span class="outcome-badge ${o}">${o==='good'?'✅ Good':o==='bad'?'❌ Bad':'⚪ Neutral'}</span>`;
+    cont.innerHTML = list.map((item, idx) =>
+      `<div class="dec-card ${idx===0&&page===1?'new-entry':''}">
+        <div class="dec-card-body">
+          <div class="dec-card-text">${FS.escape(item.decision_text)}</div>
+          <div class="dec-card-meta">
+            ${badge(item.outcome)}
+            ${item.category ? `<span style="font-size:.75rem;color:var(--tx3)">${item.category}</span>` : ''}
+            <span class="dec-card-date">${safeDate(item.created_at)}</span>
+          </div>
+        </div>
+        <button class="btn-icon" onclick="del(${item.id})" title="Delete">✕</button>
+      </div>`
+    ).join('');
+  }
 
   async function load(p) {
     page = p;
     const cont = document.getElementById('decisions-container');
-    cont.innerHTML = '<div class="skeleton" style="height:200px;border-radius:var(--r3)"></div>';
+    cont.innerHTML = '<div class="skeleton" style="height:160px;border-radius:13px"></div>';
 
     const res = await FS.api('/api/decisions/index.php?page=' + p);
     if (!res.ok) { cont.innerHTML = '<div class="alert alert-danger">Failed to load decisions.</div>'; return; }
 
     const d = res.data;
+    allDecisions = d.decisions || [];
+
+    // Stats
     document.getElementById('s-total').textContent   = d.total;
     document.getElementById('s-good').textContent    = d.stats.good;
     document.getElementById('s-bad').textContent     = d.stats.bad;
     document.getElementById('s-neutral').textContent = d.stats.neutral;
     document.getElementById('d-total').textContent   = d.total + ' total';
 
-    // Intelligence (needs at least 2 decisions to be meaningful)
+    // Win-rate ring
+    if (d.total >= 5) {
+      const tot     = d.stats.good + d.stats.bad + d.stats.neutral || 1;
+      const winRate = Math.round((d.stats.good / tot) * 100);
+      document.getElementById('winrate-wrap').style.display = 'block';
+      document.getElementById('wr-val').textContent  = winRate + '%';
+      document.getElementById('wr-tier').textContent = winRate >= 75 ? 'Exceptional Judgment' : winRate >= 55 ? 'Above Average' : winRate >= 35 ? 'Developing' : 'Needs Improvement';
+      setTimeout(() => drawWinRing(winRate), 120);
+      const pct = n => Math.round((n / tot) * 100);
+      document.getElementById('outcome-rows').innerHTML = `
+        <div class="outcome-row"><span class="outcome-lbl">Good</span><div class="outcome-bar"><div class="outcome-fill" style="width:${pct(d.stats.good)}%;background:var(--success)"></div></div><span class="outcome-cnt">${d.stats.good}</span></div>
+        <div class="outcome-row"><span class="outcome-lbl">Neutral</span><div class="outcome-bar"><div class="outcome-fill" style="width:${pct(d.stats.neutral)}%;background:var(--tx3)"></div></div><span class="outcome-cnt">${d.stats.neutral}</span></div>
+        <div class="outcome-row"><span class="outcome-lbl">Bad</span><div class="outcome-bar"><div class="outcome-fill" style="width:${pct(d.stats.bad)}%;background:var(--danger)"></div></div><span class="outcome-cnt">${d.stats.bad}</span></div>`;
+    }
+
+    // AI Insight (2+)
     if (d.total >= 2) {
-      const intel = Intel.decisions(d.decisions, d.stats);
-
-      document.getElementById('winrate-card').style.display = 'flex';
-      Intel.renderScoreGauge(intel.winRate, 'Win Rate', document.getElementById('decision-gauge'));
-      document.getElementById('wr-val').textContent = intel.winRate + '%';
-      const tier = intel.winRate >= 75 ? 'Exceptional Judgment' : intel.winRate >= 55 ? 'Above Average' : intel.winRate >= 35 ? 'Developing' : 'Needs Improvement';
-      document.getElementById('wr-sub').textContent = tier;
-
-      // Outcome bars
-      const bars = document.getElementById('outcome-bars');
-      const total = d.stats.good + d.stats.bad + d.stats.neutral;
-      const pct = n => total ? Math.round((n / total) * 100) : 0;
-      bars.innerHTML = `
-        <div class="outcome-row">
-          <span class="outcome-label">Good</span>
-          <div class="outcome-bar"><div class="outcome-fill" style="width:${pct(d.stats.good)}%;background:var(--success)"></div></div>
-          <span class="outcome-count">${d.stats.good}</span>
-        </div>
-        <div class="outcome-row">
-          <span class="outcome-label">Neutral</span>
-          <div class="outcome-bar"><div class="outcome-fill" style="width:${pct(d.stats.neutral)}%;background:var(--tx3)"></div></div>
-          <span class="outcome-count">${d.stats.neutral}</span>
-        </div>
-        <div class="outcome-row">
-          <span class="outcome-label">Bad</span>
-          <div class="outcome-bar"><div class="outcome-fill" style="width:${pct(d.stats.bad)}%;background:var(--danger)"></div></div>
-          <span class="outcome-count">${d.stats.bad}</span>
-        </div>`;
-
-      document.getElementById('dec-intel-panel').style.display = 'block';
-      const badge = document.getElementById('dec-badge');
-      badge.textContent = intel.winRate >= 60 ? 'Strong Judgment' : intel.winRate >= 40 ? 'Developing' : 'Needs Attention';
-      badge.className   = 'intel-badge badge-' + (intel.winRate >= 60 ? 'success' : intel.winRate >= 40 ? 'warn' : 'danger');
-      Intel.renderInsights(intel.insights, document.getElementById('dec-insights'));
+      document.getElementById('ai-wrap').style.display = 'block';
+      const aiBody = document.getElementById('ai-body');
+      aiBody.innerHTML = '<div class="ai-loading" style="margin-top:10px"><div class="fs-spinner" style="width:14px;height:14px;border-width:2px;border-top-color:var(--p)"></div><span>Gemini AI is analyzing your decision patterns…</span></div>';
+      const tot = d.stats.good + d.stats.bad + d.stats.neutral || 1;
+      const winRate = Math.round((d.stats.good / tot) * 100);
+      const trend = d.stats.good > d.stats.bad ? 'improving' : d.stats.bad > d.stats.good ? 'declining' : 'stable';
+      const recent = (d.decisions || []).slice(0, 5).map(x => (x.decision_text||'').slice(0, 60));
+      FS.api('/api/ai/insight.php', 'POST', {
+        module: 'decisions',
+        data: { total: d.total, good: d.stats.good, bad: d.stats.bad, neutral: d.stats.neutral, winRate, recentDecisions: recent, trend }
+      }).then(aiRes => {
+        if (aiRes.ok && aiRes.data.insight) {
+          aiBody.innerHTML = renderAiStructured(aiRes.data.insight);
+        } else {
+          aiBody.innerHTML = '<div class="ai-error" style="margin-top:10px"><span>⚠️ Could not load AI insight.</span><button class="btn btn-sm btn-secondary" onclick="load(1)">Retry</button></div>';
+        }
+      });
     }
 
-    if (!d.decisions.length) {
-      cont.innerHTML = `<div class="empty-state">
-        <div class="empty-icon"><i data-lucide="git-merge" style="width:18px;height:18px;display:inline-block;vertical-align:middle;"></i></div>
-        <h3>No decisions logged yet</h3>
-        <p>Start logging decisions above. After 5+, patterns emerge and the intelligence kicks in.</p>
-      </div>`;
-    } else {
-      const outcomeIcon = o => o === 'good' ? '<i data-lucide="check-circle" style="width:18px;height:18px;display:inline-block;vertical-align:middle;"></i>' : o === 'bad' ? '❌' : '⚪';
-      cont.innerHTML = `<div class="table-wrap"><table>
-        <thead><tr><th>Decision</th><th>Outcome</th><th>Date</th><th></th></tr></thead>
-        <tbody>${d.decisions.map(item => `<tr>
-          <td style="max-width:360px">${FS.escape(item.decision_text)}</td>
-          <td><span class="badge badge-${item.outcome}">${outcomeIcon(item.outcome)} ${item.outcome}</span></td>
-          <td style="white-space:nowrap">${FS.relDate(item.created_at)}</td>
-          <td><button class="btn btn-danger btn-sm" onclick="del(${item.id})">✕</button></td>
-        </tr>`).join('')}</tbody>
-      </table></div>`;
-    }
+    renderList();
 
     // Pagination
     const pg = document.getElementById('pagination');
     pg.innerHTML = d.pages > 1
-      ? Array.from({length: d.pages}, (_, i) => `<button class="btn btn-sm ${i+1===p?'btn-primary':'btn-secondary'}" onclick="load(${i+1})">${i+1}</button>`).join('')
-      : '';
+      ? Array.from({length: d.pages}, (_,i) =>
+          `<button class="btn btn-sm ${i+1===p?'btn-primary':'btn-secondary'}" onclick="load(${i+1})">${i+1}</button>`
+        ).join('') : '';
   }
 
   window.del = async function (id) {
     if (!confirm('Delete this decision permanently?')) return;
     const res = await FS.api('/api/decisions/index.php?delete=1', 'POST', { decision_id: id });
     if (res.ok) { FS.toast('Deleted.', 'success'); load(page); }
-    else FS.toast('Failed.', 'danger');
+    else FS.toast('Failed to delete.', 'danger');
   };
 
   document.getElementById('add-form').addEventListener('submit', async function (e) {
@@ -195,20 +392,21 @@
     errEl.style.display = 'none';
     const decision_text = document.getElementById('decision-text').value.trim();
     const outcome       = document.getElementById('outcome').value;
-    if (decision_text.length < 5) { errEl.textContent = 'Describe the decision (min 5 chars).'; errEl.style.display = 'flex'; return; }
+    const category      = document.getElementById('category').value;
+    if (decision_text.length < 5) { errEl.textContent = 'Please describe the decision (min 5 chars).'; errEl.style.display='flex'; return; }
     const btn = document.getElementById('btn-add');
     btn.disabled = true; btn.textContent = 'Saving…';
-    const res = await FS.api('/api/decisions/index.php', 'POST', { decision_text, outcome });
+    const res = await FS.api('/api/decisions/index.php', 'POST', { decision_text, outcome, category });
     if (res.ok) {
-      FS.toast('Decision logged! 📝 Patterns emerge after 10+ entries.', 'success');
+      FS.toast('Decision logged! 📝', 'success');
       document.getElementById('decision-text').value = '';
       document.getElementById('outcome').value = 'neutral';
       load(1);
     } else {
-      errEl.textContent = res.data.error || 'Failed.';
+      errEl.textContent = res.data.error || 'Failed to save.';
       errEl.style.display = 'flex';
     }
-    btn.disabled = false; btn.textContent = '+ Log Decision';
+    btn.disabled = false; btn.textContent = '+ Log';
   });
 
   await load(1);

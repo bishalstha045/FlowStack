@@ -3,10 +3,42 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta name="description" content="FlowStack Dashboard your intelligent behavioral analytics hub.">
+  <meta name="description" content="FlowStack Dashboard — your intelligent behavioral analytics hub with XP tracking.">
   <title>Dashboard FlowStack</title>
   <link rel="stylesheet" href="assets/css/app.css">
   <link rel="stylesheet" href="assets/css/style.css">
+  <style>
+    @keyframes fadeInUp { from{opacity:0;transform:translateY(15px)} to{opacity:1;transform:translateY(0)} }
+    .ai-insight-card {
+      position: relative;
+      background: linear-gradient(135deg, rgba(255,255,255,0.05), rgba(255,255,255,0.01));
+      border: 1px solid var(--border-light);
+      border-left: 3px solid var(--p);
+      border-radius: var(--r3);
+      padding: 22px 24px;
+      animation: fadeInUp .4s cubic-bezier(0.2, 0.8, 0.2, 1);
+      box-shadow: var(--s1);
+      backdrop-filter: blur(8px);
+    }
+    .ai-badge {
+      position: absolute;
+      top: 14px; right: 16px;
+      background: linear-gradient(135deg, rgba(139,92,246,0.15), rgba(219,39,119,0.15));
+      color: #fff;
+      border: 1px solid rgba(255,255,255,0.1);
+      border-radius: 20px;
+      padding: 4px 12px;
+      font-size: .72rem;
+      font-weight: 700;
+      letter-spacing: .5px;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+    }
+    .ai-insight-text { font-style: normal; color: var(--tx); font-size: .95rem; line-height: 1.7; margin: 12px 0 0; }
+    .ai-loading { display:flex; align-items:center; gap:12px; color:var(--tx2); font-size:.9rem; font-weight:500; }
+    .ai-error { background:rgba(239,68,68,.1); border:1px solid rgba(239,68,68,.3); border-radius:var(--r2);
+      padding:14px 18px; color:var(--danger); font-size:.88rem;
+      display:flex; align-items:center; justify-content:space-between; gap:12px; }
+  </style>
 </head>
 <body>
 <div id="fs-loading"><div class="fs-spinner"></div><span class="loading-text">Analyzing your data…</span></div>
@@ -29,13 +61,21 @@
         </div>
       </div>
 
-      <!-- FlowScore panel -->
+      <!-- Level/XP Panel -->
       <div id="flowscore-panel">
         <div class="flowscore-panel">
           <div class="flowscore-left" id="gauge-container"></div>
           <div class="flowscore-right">
             <div class="flowscore-tier" id="flow-tier">Calculating…</div>
             <div class="flowscore-summary" id="flow-summary">Gathering your data…</div>
+            <div id="xp-section" style="margin-top:10px">
+              <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">
+                <span style="font-size:.78rem;color:var(--tx3)" id="xp-label">0 XP</span>
+                <span style="font-size:.72rem;color:var(--tx3)" id="xp-next">Next: 100 XP</span>
+              </div>
+              <div class="progress-wrap" style="height:8px"><div class="progress-bar" id="xp-bar" style="width:0%;transition:width 1.5s ease"></div></div>
+              <div style="font-size:.72rem;color:var(--p);margin-top:4px" id="xp-today"></div>
+            </div>
             <div class="flowscore-scores" id="flow-scores"></div>
           </div>
         </div>
@@ -115,13 +155,30 @@
     FS.api('/api/focus/index.php'),
   ]);
 
-  // Stats
+  // Stats with count-up animation
+  function animateCount(el, target, suffix) {
+    suffix = suffix || '';
+    let current = 0;
+    const step = Math.max(1, Math.ceil(target / 30));
+    const interval = setInterval(() => {
+      current = Math.min(current + step, target);
+      el.innerHTML = current + suffix;
+      if (current >= target) clearInterval(interval);
+    }, 30);
+  }
+
   if (dashRes.ok) {
     const d = dashRes.data;
-    document.getElementById('s-habits').textContent  = d.active_habits;
-    document.getElementById('s-focus').innerHTML     = d.focus_hours + '<span> hrs</span>';
-    document.getElementById('s-rate').innerHTML      = d.decision_rate + '<span>%</span>';
-    document.getElementById('s-streak').textContent  = d.best_streak;
+    animateCount(document.getElementById('s-habits'), d.active_habits);
+    animateCount(document.getElementById('s-focus'), d.focus_hours, '<span> hrs</span>');
+    animateCount(document.getElementById('s-rate'), d.decision_rate, '<span>%</span>');
+    animateCount(document.getElementById('s-streak'), d.best_streak);
+
+    // XP/Level display
+    document.getElementById('xp-label').textContent = d.xp + ' XP';
+    document.getElementById('xp-next').textContent = d.level === 'Elite' ? 'Max Level!' : 'Next: ' + d.next_threshold + ' XP';
+    setTimeout(() => { document.getElementById('xp-bar').style.width = d.xp_progress + '%'; }, 300);
+    document.getElementById('xp-today').textContent = d.today_xp > 0 ? '⚡ +' + d.today_xp + ' XP today' : '';
   }
 
   // Intelligence
@@ -137,17 +194,25 @@
     ? Intel.decisions([], { rate: dashStats.decision_rate, total: dashStats.total_decisions })
     : null;
 
-  // FlowScore
+  // FlowScore / Level
   const synthesis = Intel.synthesize(habitResult, focusResult, decisionResult, null);
   Intel.renderScoreGauge(synthesis.flowScore, '/100', document.getElementById('gauge-container'));
-  document.getElementById('flow-tier').textContent    = synthesis.tier + ' Level';
+  document.getElementById('flow-tier').textContent    = dashStats.level || (synthesis.tier + ' Level');
   document.getElementById('flow-summary').textContent = synthesis.summary;
   document.getElementById('flow-scores').innerHTML    = synthesis.scores.map(s =>
     `<div class="module-score">${s.icon} ${s.label}<span>${s.score}</span></div>`).join('');
 
-  // Smart insights (combine habit + focus insights, top 4)
-  const allInsights = [...(habitResult?.insights || []), ...(focusResult?.insights || [])].slice(0, 4);
-  Intel.renderInsights(allInsights, document.getElementById('insights-list'));
+  // AI Insights (Gemini)
+  const insightsContainer = document.getElementById('insights-list');
+  insightsContainer.innerHTML = `<div class="ai-loading"><div class="fs-spinner" style="width:14px;height:14px;border-width:2px;border-top-color:var(--p)"></div><span>Gemini AI is analyzing your dashboard…</span></div>`;
+
+  FS.api('/api/ai/insight.php', 'POST', { module: 'dashboard', data: { dashStats, flowScore: synthesis.flowScore } }).then(aiRes => {
+    if (aiRes.ok && aiRes.data.insight) {
+      insightsContainer.innerHTML = `<div class="ai-insight-card"><span class="ai-badge">✨ AI Insight</span><p class="ai-insight-text">${FS.escape(aiRes.data.insight)}</p></div>`;
+    } else {
+      insightsContainer.innerHTML = `<div class="ai-error"><span>⚠️ Could not load AI insight.</span><button class="btn btn-sm btn-secondary" onclick="location.reload()">Retry</button></div>`;
+    }
+  });
 
   // Habits preview
   const hp = document.getElementById('habits-preview');

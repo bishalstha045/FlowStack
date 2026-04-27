@@ -164,39 +164,46 @@ FS.initLayout = function (user, activePage) {
         .map(n => n[0]).join('').toUpperCase().slice(0, 2);
 
     const navItems = [
-        { key: 'dashboard',   label: 'Dashboard',     href: 'dashboard.html',   icon: 'layout-dashboard' },
-        { key: 'habits',      label: 'HabitSync',     href: 'habits.html',      icon: 'check-circle' },
-        { key: 'focus',       label: 'Focus Tracker', href: 'focus.html',       icon: 'timer' },
-        { key: 'decisions',   label: 'DecisionLog',   href: 'decisions.html',   icon: 'git-merge' },
-        { key: 'skills',      label: 'Skills',        href: 'skills.html',      icon: 'award' },
-        { key: 'pathcompare', label: 'Path Compare',  href: 'pathcompare.html', icon: 'scale' },
-        { key: 'nextmove',    label: 'Next Move',     href: 'nextmove.html',    icon: 'compass' },
-        { key: 'analytics',   label: 'Analytics',     href: 'analytics.html',   icon: 'bar-chart' },
+        { key: 'dashboard',   label: 'Dashboard',     href: 'dashboard.html',   icon: 'layout-dashboard', color: 'var(--accent-1)' },
+        { key: 'habits',      label: 'HabitSync',     href: 'habits.html',      icon: 'check-circle',     color: 'var(--accent-4)' },
+        { key: 'focus',       label: 'Focus Tracker', href: 'focus.html',       icon: 'timer',            color: 'var(--accent-2)' },
+        { key: 'decisions',   label: 'DecisionLog',   href: 'decisions.html',   icon: 'git-merge',        color: 'var(--accent-1)' },
+        { key: 'skills',      label: 'Skills',        href: 'skills.html',      icon: 'award',            color: 'var(--accent-2)' },
+        { key: 'pathcompare', label: 'Path Compare',  href: 'pathcompare.html', icon: 'scale',            color: 'var(--accent-5)' },
+        { key: 'nextmove',    label: 'Next Move',     href: 'nextmove.html',    icon: 'compass',          color: 'var(--accent-2)' },
+        { key: 'analytics',   label: 'Analytics',     href: 'analytics.html',   icon: 'bar-chart',        color: 'var(--accent-1)' },
     ];
 
     const navHTML = navItems.map(p => `
-        <a href="${p.href}" class="nav-item ${activePage === p.key ? 'nav-active' : ''}" id="nav-${p.key}">
-            <i data-lucide="${p.icon}" class="nav-emoji" style="width:20px;height:20px;stroke-width:1.5;"></i>
+        <a href="${p.href}" class="nav-item ${activePage === p.key ? 'nav-active' : ''}" id="nav-${p.key}" style="--nav-color: ${p.color}">
+            <i data-lucide="${p.icon}" class="nav-emoji" style="width:20px;height:20px;stroke-width:1.5;color:var(--nav-color)"></i>
             <span class="nav-label">${p.label}</span>
-            ${activePage === p.key ? '<span class="nav-dot"></span>' : ''}
         </a>`).join('');
 
     const sb = document.getElementById('fs-sidebar');
     if (sb) {
+        sb.style.backdropFilter = 'blur(20px)';
+        sb.style.background = 'var(--bg-glass)';
+        
         sb.innerHTML = `
             <div class="sidebar-logo">
-                <i data-lucide="zap" style="color:var(--p);width:24px;height:24px;"></i>
+                <i data-lucide="zap" style="color:var(--accent-2);width:24px;height:24px;animation: pulse 2s infinite"></i>
                 <span class="logo-text">FlowStack</span>
             </div>
             <nav class="sidebar-nav">
                 <p class="nav-section-label">Main Menu</p>
                 ${navHTML}
             </nav>
-            <div class="sidebar-user">
+            <div style="padding: 0 16px 16px;">
+                <a href="focus.html" class="btn btn-primary" style="width:100%; justify-content:center; background:linear-gradient(135deg, var(--accent-1), var(--accent-2)); border:none;">
+                    ⚡ Start Focus
+                </a>
+            </div>
+            <div class="sidebar-user" style="border-top:1px solid var(--border-glow); margin-top:0;">
                 <div class="user-avatar">${FS.escape(initials)}</div>
                 <div class="user-info">
                     <div class="user-name">${FS.escape(user.name)}</div>
-                    <div class="user-email">${FS.escape(user.email)}</div>
+                    <div style="font-size:0.65rem; color:var(--text-muted); margin-top:2px;">XP <div class="progress-wrap" style="height:4px; margin-top:2px"><div class="progress-bar" style="width:60%; background:var(--accent-2)"></div></div></div>
                 </div>
             </div>`;
     }
@@ -269,12 +276,11 @@ FS.escape = function (str) {
 
 FS.relDate = function (dateStr) {
     if (!dateStr) return '';
-    const d    = new Date(dateStr.includes('T') ? dateStr : dateStr + 'T00:00:00');
-    const diff = Math.floor((Date.now() - d.getTime()) / 86400000);
-    if (diff === 0) return 'Today';
-    if (diff === 1) return 'Yesterday';
-    if (diff < 7)   return diff + 'd ago';
-    return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+    let cleanDate = dateStr.replace(' ', 'T');
+    if (!cleanDate.includes('T')) cleanDate += 'T00:00:00';
+    const d = new Date(cleanDate);
+    if (isNaN(d)) return dateStr;
+    return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
 };
 
 FS.showLoading = function (show) {

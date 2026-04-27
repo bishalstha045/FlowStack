@@ -3,10 +3,119 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta name="description" content="Path Compare Score two paths and get a data-driven recommendation.">
-  <title>Path Compare FlowStack</title>
+  <meta name="description" content="Path Compare — AI-powered scored comparison of two life paths with pros, cons, and clear recommendation.">
+  <title>Path Compare · FlowStack</title>
   <link rel="stylesheet" href="assets/css/app.css">
   <link rel="stylesheet" href="assets/css/style.css">
+  <style>
+    @keyframes fadeInUp {
+      from { opacity: 0; transform: translateY(14px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
+    /* Input columns */
+    .pc-input-cols {
+      display: grid; grid-template-columns: 1fr 1fr; gap: 16px;
+    }
+    @media(max-width:768px){ .pc-input-cols { grid-template-columns: 1fr; } }
+
+    .pc-option-label {
+      font-size: .72rem; font-weight: 700; text-transform: uppercase;
+      letter-spacing: .08em; margin-bottom: 6px;
+    }
+    .pc-option-label.a { color: #60a5fa; }
+    .pc-option-label.b { color: #f472b6; }
+
+    /* Analyze button */
+    #btn-compare {
+      width: 100%; margin-top: 16px; padding: 12px 20px;
+      font-size: .95rem; font-weight: 600;
+      display: flex; align-items: center; justify-content: center; gap: 8px;
+    }
+
+    /* Result section */
+    #result-section { animation: fadeInUp 0.4s ease; }
+
+    .pc-cols {
+      display: grid; grid-template-columns: 1fr 1fr; gap: 16px;
+      margin-bottom: 16px;
+    }
+    @media(max-width:768px){ .pc-cols { grid-template-columns: 1fr; } }
+
+    .pc-score-card {
+      background: rgba(255,255,255,0.04);
+      border: 1px solid rgba(255,255,255,0.08);
+      border-radius: 16px; padding: 20px;
+    }
+    .pc-score-card.winner { border-color: rgba(139,92,246,0.4); background: rgba(139,92,246,0.06); }
+    .pc-score-card-header {
+      display: flex; align-items: center; justify-content: space-between;
+      margin-bottom: 14px;
+    }
+    .pc-score-card-title { font-weight: 700; font-size: .95rem; color: var(--tx); }
+
+    .pc-ring-wrap { display: flex; align-items: center; gap: 18px; margin-bottom: 16px; }
+
+    .pc-score-big { font-size: 3rem; font-weight: 900; line-height: 1; }
+    .pc-score-sub { font-size: .72rem; color: var(--tx3); }
+
+    .pros-list, .cons-list { margin: 0; padding: 0; list-style: none; display: flex; flex-direction: column; gap: 5px; }
+    .pros-list li, .cons-list li { font-size: .83rem; line-height: 1.5; display: flex; gap: 7px; align-items: baseline; }
+    .pros-list li::before { content:'●'; color: var(--success); flex-shrink:0; font-size:.6rem; margin-top:4px; }
+    .cons-list li::before { content:'●'; color: var(--danger);  flex-shrink:0; font-size:.6rem; margin-top:4px; }
+    .pros-cons-label { font-size: .72rem; font-weight: 700; text-transform: uppercase; letter-spacing: .06em; margin: 12px 0 6px; }
+    .pros-cons-label.pros { color: var(--success); }
+    .pros-cons-label.cons { color: var(--danger); }
+
+    /* Winner banner */
+    .winner-banner {
+      background: linear-gradient(135deg, rgba(245,158,11,0.18) 0%, rgba(251,191,36,0.08) 100%);
+      border: 1px solid rgba(245,158,11,0.35);
+      border-radius: 16px; padding: 22px 24px;
+      margin-bottom: 16px; display: flex; align-items: center; gap: 16px;
+      animation: fadeInUp 0.4s ease;
+    }
+    .winner-trophy { font-size: 2.4rem; flex-shrink: 0; }
+    .winner-text h3 { color: #fbbf24; font-size: 1.05rem; margin-bottom: 4px; }
+    .winner-text p  { color: var(--tx2); font-size: .88rem; line-height: 1.55; margin: 0; }
+
+    /* Reasoning card */
+    .reasoning-card {
+      background: rgba(255,255,255,0.04);
+      border: 1px solid rgba(255,255,255,0.08);
+      border-left: 3px solid var(--p);
+      border-radius: 16px; padding: 20px;
+      margin-bottom: 16px;
+      position: relative;
+    }
+    .ai-badge {
+      position: absolute; top: 14px; right: 14px;
+      background: rgba(139,92,246,0.18); color: var(--p);
+      border: 1px solid rgba(139,92,246,0.3);
+      border-radius: 20px; padding: 3px 10px;
+      font-size: .72rem; font-weight: 600;
+    }
+    .reasoning-text { font-size: .88rem; color: var(--tx2); line-height: 1.75; font-style: italic; margin-top: 6px; }
+
+    /* History table */
+    .hist-table { width: 100%; border-collapse: collapse; }
+    .hist-table th {
+      text-align: left; padding: 10px 12px;
+      font-size: .72rem; text-transform: uppercase; letter-spacing: .06em;
+      color: var(--tx3); border-bottom: 1px solid rgba(255,255,255,0.08);
+    }
+    .hist-table td { padding: 12px 12px; border-bottom: 1px solid rgba(255,255,255,0.05); vertical-align: middle; font-size: .85rem; }
+    .hist-table tbody tr { cursor: pointer; transition: background .15s; }
+    .hist-table tbody tr:hover { background: rgba(255,255,255,0.04); }
+
+    .ai-error-bar {
+      background: rgba(245,158,11,0.12);
+      border: 1px solid rgba(245,158,11,0.3);
+      border-radius: 10px; padding: 12px 16px;
+      color: var(--warning); font-size: .85rem;
+      display: flex; align-items: center; justify-content: space-between; gap: 10px;
+    }
+  </style>
 </head>
 <body>
 <div id="fs-loading"><div class="fs-spinner"></div><span class="loading-text">Loading…</span></div>
@@ -21,50 +130,61 @@
       <div class="page-header">
         <div class="page-header-text">
           <h1>Path Compare</h1>
-          <p>Enter two options get a scored comparison with clear recommendation</p>
+          <p>Enter two options — get an AI-scored comparison with clear recommendation</p>
         </div>
       </div>
 
-      <!-- Form -->
-      <div class="card" style="margin-bottom:20px">
-        <div class="card-title"><span>Compare Two Options</span></div>
+      <!-- Input form -->
+      <div style="background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);border-radius:16px;padding:20px;margin-bottom:20px">
+        <div style="font-weight:700;font-size:1rem;color:var(--tx);margin-bottom:16px">Compare Two Options</div>
         <form id="compare-form" novalidate>
-          <div class="compare-cols">
+          <div class="pc-input-cols">
             <div class="form-group" style="margin-bottom:0">
-              <label for="option-a">Option A</label>
+              <div class="pc-option-label a">⬡ Option A</div>
               <textarea id="option-a" class="form-control" rows="5"
-                placeholder="e.g. Accept job offer at Company X stable salary of $60k, remote work, good culture, some boring tasks…" required></textarea>
+                placeholder="e.g. Accept job offer at Company X — stable salary, remote work, good culture…" required></textarea>
             </div>
             <div class="form-group" style="margin-bottom:0">
-              <label for="option-b">Option B</label>
+              <div class="pc-option-label b">⬡ Option B</div>
               <textarea id="option-b" class="form-control" rows="5"
-                placeholder="e.g. Go freelance freedom to choose projects, income uncertainty, need 3 months savings runway…" required></textarea>
+                placeholder="e.g. Go freelance — freedom to choose projects, income uncertainty…" required></textarea>
             </div>
           </div>
-          <p class="form-hint" style="margin-top:8px">💡 Be specific more detail = more accurate scoring. Mention time, money, risk, learning, and lifestyle impact.</p>
+          <p style="font-size:.8rem;color:var(--tx3);margin:10px 0 0">
+            💡 Be specific — mention time, money, risk, learning, and lifestyle impact for the most accurate scoring.
+          </p>
           <div id="compare-error" class="alert alert-danger" style="display:none;margin-top:10px"></div>
-          <div style="margin-top:14px">
-            <button type="submit" class="btn btn-primary" id="btn-compare"><i data-lucide="scale" style="width:18px;height:18px;display:inline-block;vertical-align:middle;"></i> Analyze Paths</button>
-          </div>
+          <button type="submit" class="btn btn-primary" id="btn-compare">
+            <span id="btn-icon">⚖️</span> Analyze Paths
+          </button>
         </form>
       </div>
 
-      <!-- Result -->
+      <!-- Result section -->
       <div id="result-section" style="display:none;margin-bottom:24px">
-        <div class="section-title" style="margin-bottom:14px"><span>Analysis Result</span></div>
-        <div class="compare-cols" style="margin-bottom:14px">
-          <div class="compare-col" id="col-a"></div>
-          <div class="compare-col" id="col-b"></div>
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;flex-wrap:wrap;gap:8px">
+          <span style="font-weight:700;font-size:1rem;color:var(--tx)">⚖️ AI Analysis Result</span>
+          <span style="background:rgba(139,92,246,0.18);color:var(--p);border:1px solid rgba(139,92,246,0.3);border-radius:20px;padding:3px 10px;font-size:.72rem;font-weight:600">✨ Gemini AI</span>
         </div>
-        <div class="winner-card" id="winner-card"></div>
-        <div class="intel-panel" style="margin-top:14px">
-          <div class="intel-header"><h2><i data-lucide="brain" style="width:18px;height:18px;display:inline-block;vertical-align:middle;"></i> Detailed Analysis</h2></div>
-          <div id="compare-insights"></div>
+
+        <!-- Score cards -->
+        <div class="pc-cols">
+          <div class="pc-score-card" id="col-a"></div>
+          <div class="pc-score-card" id="col-b"></div>
+        </div>
+
+        <!-- Winner banner -->
+        <div class="winner-banner" id="winner-banner"></div>
+
+        <!-- Detailed reasoning -->
+        <div class="reasoning-card" id="reasoning-card">
+          <span class="ai-badge">✨ AI Insight</span>
+          <div id="reasoning-text" class="reasoning-text"></div>
         </div>
       </div>
 
       <!-- History -->
-      <div class="section-title"><span>Past Comparisons</span></div>
+      <div style="font-weight:700;font-size:1rem;color:var(--tx);margin-bottom:12px">Past Comparisons</div>
       <div id="history-container"></div>
 
     </main>
@@ -74,92 +194,113 @@
 <script src="assets/js/app.js"></script>
 <script src="assets/js/intelligence.js"></script>
 <script>
-// ── Client-side path scoring engine ──────────────────────────────
-function scorePath(text) {
-  const t = text.toLowerCase();
-  let pos = 0, neg = 0;
-
-  // Growth / opportunity signals
-  const posTerms = [
-    ['career growth', 4], ['learning', 3], ['skill', 2], ['opportunity', 3], ['promotion', 4],
-    ['leadership', 3], ['mentor', 3], ['experience', 2], ['health', 2], ['flexibility', 3],
-    ['remote', 2], ['freedom', 3], ['passion', 3], ['autonomy', 3], ['stability', 2],
-    ['salary increase', 4], ['high pay', 3], ['good pay', 2], ['work life', 2], ['balance', 2],
-    ['team', 1], ['culture', 2], ['purpose', 3], ['impact', 3], ['connect', 1],
-    ['savings', 2], ['invest', 2], ['profitable', 3], ['scalable', 3], ['dream', 2],
-  ];
-  // Risk / downside signals
-  const negTerms = [
-    ['risk', 3], ['uncertain', 3], ['difficult', 2], ['hard', 1], ['stress', 3],
-    ['toxic', 5], ['boring', 3], ['dead end', 4], ['low pay', 3], ['overtime', 3],
-    ['commute', 2], ['politics', 3], ['micromanage', 4], ['lay', 3], ['debt', 4],
-    ['expensive', 3], ['unstable', 4], ['anxiety', 3], ['exhausting', 3], ['cut',2],
-    ['no growth', 5], ['limited', 2], ['leave family', 3], ['sacrifice', 2], ['compromise', 2],
-  ];
-
-  posTerms.forEach(([term, w]) => { if (t.includes(term)) pos += w; });
-  negTerms.forEach(([term, w]) => { if (t.includes(term)) neg += w; });
-
-  // Word count bonus (more detail = more thoughtful)
-  const wordCount = t.split(/\s+/).length;
-  pos += Math.min(wordCount / 15, 3);
-
-  return { positive: Math.round(pos), negative: Math.round(neg), net: Math.round(pos - neg) };
+function safeDate(str) {
+  if (!str) return '—';
+  const d = new Date(str.replace(' ', 'T'));
+  if (isNaN(d)) return str.split(' ')[0];
+  return FS.relDate ? FS.relDate(str) : d.toLocaleDateString();
 }
 
-function generateInsights(scoreA, scoreB, optA, optB, selected) {
-  const insights = [];
-  const winner   = selected === 'A' ? 'Option A' : 'Option B';
-  const loser    = selected === 'A' ? 'Option B' : 'Option A';
-  const sWin     = selected === 'A' ? scoreA : scoreB;
-  const sLose    = selected === 'A' ? scoreB : scoreA;
-  const margin   = Math.abs(sWin.net - sLose.net);
-
-  if (margin <= 2) {
-    insights.push({ t: 'warn', msg: `⚠️ This is extremely close (net difference: ${margin}). The AI can't separate them clearly your gut feeling should be the tiebreaker.` });
-  } else if (margin <= 5) {
-    insights.push({ t: 'info', msg: `<i data-lucide="bar-chart" style="width:18px;height:18px;display:inline-block;vertical-align:middle;"></i> ${winner} has a slight edge (margin: ${margin} points). Both options have real merit this comes down to your personal values and risk tolerance.` });
-  } else {
-    insights.push({ t: 'success', msg: `<i data-lucide="target" style="width:18px;height:18px;display:inline-block;vertical-align:middle;"></i> ${winner} wins clearly with a ${margin}-point lead. The analysis signal is strong.` });
-  }
-
-  if (sWin.negative > 5) {
-    insights.push({ t: 'warn', msg: `⚠️ ${winner} still has ${sWin.negative} risk signals. These won't disappear go in with eyes open and have a mitigation plan.` });
-  }
-
-  if (sLose.positive > 5) {
-    insights.push({ t: 'info', msg: `💡 ${loser} has ${sLose.positive} positive signals too. If ${winner} doesn't work out, ${loser} is a solid fallback.` });
-  }
-
-  insights.push({ t: 'info', msg: `📋 Decider's checklist: (1) Which option has NO going back? Prefer reversible choices. (2) Which would you regret NOT taking in 5 years? (3) Which aligns with who you want to become, not just what you want now?` });
-
-  return insights;
+function drawRingSVG(pct, color) {
+  const r = 36, circ = 2 * Math.PI * r;
+  const offset = circ - (pct / 100) * circ;
+  return `<svg width="88" height="88" viewBox="0 0 88 88">
+    <circle cx="44" cy="44" r="${r}" fill="none" stroke="rgba(255,255,255,0.07)" stroke-width="8"/>
+    <circle cx="44" cy="44" r="${r}" fill="none" stroke="${color}" stroke-width="8"
+      stroke-linecap="round" stroke-dasharray="${circ.toFixed(2)}" stroke-dashoffset="${offset.toFixed(2)}"
+      transform="rotate(-90 44 44)" style="transition:stroke-dashoffset .6s ease"/>
+    <text x="44" y="48" text-anchor="middle" fill="var(--tx)" font-size="16" font-weight="800"
+      style="font-family:inherit">${pct}</text>
+  </svg>`;
 }
+
+function renderAnalysis(data) {
+  const scoreA   = parseInt(data.score_a)   || 50;
+  const scoreB   = parseInt(data.score_b)   || 50;
+  const selected = (data.selected || data.selected_option || 'A').toString().toUpperCase();
+  const reasoning = data.reasoning || '';
+  const prosA = (data.pros_a || '').trim();
+  const consA = (data.cons_a || '').trim();
+  const prosB = (data.pros_b || '').trim();
+  const consB = (data.cons_b || '').trim();
+
+  const buildList = (text, cls) => {
+    if (!text) return '';
+    const items = text.split('\n').map(s => s.replace(/^[\-\•\*]\s*/, '').trim()).filter(Boolean);
+    return items.map(s => `<li>${FS.escape(s)}</li>`).join('');
+  };
+
+  const renderCol = (elId, label, score, pros, cons, isWinner, accentColor) => {
+    const col = document.getElementById(elId);
+    col.className = 'pc-score-card' + (isWinner ? ' winner' : '');
+    col.innerHTML = `
+      <div class="pc-score-card-header">
+        <span class="pc-score-card-title">${label}</span>
+        ${isWinner ? '<span class="badge badge-primary">🏆 Winner</span>' : ''}
+      </div>
+      <div class="pc-ring-wrap">
+        ${drawRingSVG(score, accentColor)}
+        <div>
+          <div class="pc-score-big" style="color:${accentColor}">${score}</div>
+          <div class="pc-score-sub">out of 100</div>
+        </div>
+      </div>
+      ${pros ? `<div class="pros-cons-label pros">✅ Pros</div><ul class="pros-list">${buildList(pros)}</ul>` : ''}
+      ${cons ? `<div class="pros-cons-label cons">⚠️ Cons</div><ul class="cons-list">${buildList(cons)}</ul>` : ''}`;
+  };
+
+  renderCol('col-a', '⬡ Option A', scoreA, prosA, consA, selected === 'A', '#60a5fa');
+  renderCol('col-b', '⬡ Option B', scoreB, prosB, consB, selected === 'B', '#f472b6');
+
+  document.getElementById('winner-banner').innerHTML = `
+    <div class="winner-trophy">🏆</div>
+    <div class="winner-text">
+      <h3>Recommended: Option ${FS.escape(selected)}</h3>
+      <p>Option ${FS.escape(selected)} scores ${selected === 'A' ? scoreA : scoreB} vs ${selected === 'A' ? scoreB : scoreA} — the stronger choice based on growth, reversibility and risk.</p>
+    </div>`;
+
+  document.getElementById('reasoning-text').textContent = reasoning || 'Analysis complete.';
+  document.getElementById('result-section').style.display = 'block';
+
+  setTimeout(() => {
+    document.getElementById('result-section').scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }, 80);
+}
+
+async function loadHistory() {
+  const res  = await FS.api('/api/pathcompare/index.php');
+  const cont = document.getElementById('history-container');
+  if (!res.ok || !res.data.history?.length) {
+    cont.innerHTML = `<div style="text-align:center;padding:40px 24px;background:rgba(255,255,255,0.02);border:1px dashed rgba(255,255,255,0.1);border-radius:16px">
+      <div style="font-size:2.2rem;margin-bottom:10px;opacity:.4">⚖️</div>
+      <h3 style="color:var(--tx2);font-size:.95rem;margin-bottom:6px">No comparisons yet</h3>
+      <p style="color:var(--tx3);font-size:.82rem">Fill in two options above and click Analyze Paths.</p>
+    </div>`;
+    return;
+  }
+  cont.innerHTML = `<div style="overflow-x:auto"><table class="hist-table">
+    <thead><tr><th>Option A</th><th>Option B</th><th>Winner</th><th>Score</th><th>Date</th></tr></thead>
+    <tbody>${res.data.history.map(h => `<tr onclick="viewComparison(${h.id})" title="Click to view full analysis">
+      <td style="max-width:160px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--tx)">${FS.escape((h.option_a||'').slice(0,35))}${(h.option_a||'').length > 35 ? '…' : ''}</td>
+      <td style="max-width:160px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--tx)">${FS.escape((h.option_b||'').slice(0,35))}${(h.option_b||'').length > 35 ? '…' : ''}</td>
+      <td><span class="badge badge-primary">Option ${FS.escape(h.selected_option || '—')}</span></td>
+      <td style="color:var(--tx3)">${h.score_a || '—'}/${h.score_b || '—'}</td>
+      <td style="white-space:nowrap;color:var(--tx3);font-size:.8rem">${safeDate(h.created_at)}</td>
+    </tr>`).join('')}</tbody>
+  </table></div>`;
+}
+
+window.viewComparison = async function(id) {
+  const res = await FS.api('/api/pathcompare/index.php?id=' + id);
+  if (res.ok && res.data.comparison) {
+    renderAnalysis(res.data.comparison);
+  }
+};
 
 (async function () {
   const user = await FS.requireAuth();
   if (!user) return;
   FS.initLayout(user, 'pathcompare');
-
-  async function loadHistory() {
-    const res  = await FS.api('/api/pathcompare/index.php');
-    const cont = document.getElementById('history-container');
-    if (!res.ok || !res.data.history?.length) {
-      cont.innerHTML = `<div class="empty-state"><div class="empty-icon"><i data-lucide="scale" style="width:18px;height:18px;display:inline-block;vertical-align:middle;"></i></div>
-        <h3>No comparisons yet</h3>
-        <p>Fill in two options above and click Analyze Paths.</p></div>`;
-      return;
-    }
-    cont.innerHTML = `<div class="table-wrap"><table>
-      <thead><tr><th>Option A</th><th>Option B</th><th>Winner</th><th>Date</th></tr></thead>
-      <tbody>${res.data.history.map(h => `<tr>
-        <td style="max-width:160px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${FS.escape(h.option_a.slice(0,55))}…</td>
-        <td style="max-width:160px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${FS.escape(h.option_b.slice(0,55))}…</td>
-        <td><span class="badge badge-primary">Option ${h.selected_option}</span></td>
-        <td style="white-space:nowrap">${FS.relDate(h.created_at)}</td>
-      </tr>`).join('')}</tbody>
-    </table></div>`;
-  }
 
   document.getElementById('compare-form').addEventListener('submit', async function (e) {
     e.preventDefault();
@@ -168,59 +309,107 @@ function generateInsights(scoreA, scoreB, optA, optB, selected) {
     const option_a = document.getElementById('option-a').value.trim();
     const option_b = document.getElementById('option-b').value.trim();
     if (option_a.length < 5 || option_b.length < 5) {
-      errEl.textContent = 'Both options need at least 5 characters for scoring.';
+      errEl.textContent = 'Both options need at least 5 characters for accurate scoring.';
       errEl.style.display = 'flex'; return;
     }
 
     const btn = document.getElementById('btn-compare');
+    const btnIcon = document.getElementById('btn-icon');
     btn.disabled = true;
-    btn.innerHTML = '<span class="fs-spinner" style="width:14px;height:14px;border-width:2px;margin-right:8px"></span>Scoring…';
+    btnIcon.outerHTML = `<span id="btn-icon"><span class="fs-spinner" style="width:14px;height:14px;border-width:2px;display:inline-block;vertical-align:middle;margin-right:4px"></span></span>`;
+    btn.childNodes[btn.childNodes.length - 1].textContent = ' AI is analyzing…';
 
-    // Client-side scoring (fast, local)
-    const scoreA = scorePath(option_a);
-    const scoreB = scorePath(option_b);
-    const selected = scoreA.net >= scoreB.net ? 'A' : 'B';
-    const winner_score = selected === 'A' ? scoreA : scoreB;
-    const loser_score  = selected === 'A' ? scoreB : scoreA;
-    const margin = Math.abs(scoreA.net - scoreB.net);
-    const confidence = margin <= 2 ? 'Toss-up' : margin <= 5 ? 'Slight edge' : margin <= 10 ? 'Clear win' : 'Strong win';
-
-    const reasoning = margin <= 2
-      ? 'These options are extremely balanced. The difference is negligible let your values and intuition decide.'
-      : `Option ${selected} scores ${margin} points higher. ${confidence}: ${selected === 'A' ? option_a.slice(0, 60) : option_b.slice(0, 60)}…`;
-
-    // Save via backend
-    const res = await FS.api('/api/pathcompare/index.php', 'POST', {
-      option_a, option_b, selected_option: selected,
-      score_a: scoreA.net, score_b: scoreB.net, reasoning
+    // Call AI — force=1 for fresh response every time
+    const aiRes = await FS.api('/api/ai/insight.php?force=1', 'POST', {
+      module: 'pathcompare',
+      data: { option_a, option_b }
     });
 
-    // Show result regardless of backend save
-    const renderCol = (id, label, score) => {
-      const net_color = score.net >= 0 ? 'var(--success)' : 'var(--danger)';
-      document.getElementById(id).innerHTML = `
-        <h4>${label}</h4>
-        <div class="score-row"><span class="score-label">Growth signals</span><span class="score-val" style="color:var(--success)">+${score.positive}</span></div>
-        <div class="score-row"><span class="score-label">Risk signals</span><span class="score-val" style="color:var(--danger)">-${score.negative}</span></div>
-        <div class="score-row"><span class="score-label">Net score</span><span class="score-val" style="color:${net_color};font-size:1.1rem">${score.net > 0?'+':''}${score.net}</span></div>`;
-    };
-    renderCol('col-a', '<i data-lucide="bar-chart" style="width:18px;height:18px;display:inline-block;vertical-align:middle;"></i> Option A', scoreA);
-    renderCol('col-b', '<i data-lucide="bar-chart" style="width:18px;height:18px;display:inline-block;vertical-align:middle;"></i> Option B', scoreB);
+    // Restore button state
+    btn.disabled = false;
+    document.getElementById('btn-icon').textContent = '⚖️';
+    btn.childNodes[btn.childNodes.length - 1].textContent = ' Analyze Paths';
 
-    document.getElementById('winner-card').innerHTML = `
-      <h3>🏆 Recommended: Option ${selected} ${confidence}</h3>
-      <p>${reasoning}</p>`;
+    // Handle rate limit / API error — NEVER show fake analysis
+    if (!aiRes.ok || !aiRes.data?.insight) {
+      const msg = aiRes.data?.error || 'Gemini AI is temporarily busy.';
+      // Hide any stale old result so the user doesn't see fake data
+      document.getElementById('result-section').style.display = 'none';
+      errEl.innerHTML = `⏳ Gemini is at capacity. <strong>Auto-retrying in <span id="cd-num">62</span>s — sit tight!</strong>`;
+      errEl.style.display = 'flex';
+      // 62s guaranteed reset — rate limit window is 60s
+      let secs = 62; btn.disabled = true;
+      const cd = setInterval(() => {
+        secs--;
+        const cdEl = document.getElementById('cd-num');
+        if (cdEl) cdEl.textContent = secs;
+        btn.childNodes[btn.childNodes.length - 1].textContent = ` Retry in ${secs}s…`;
+        if (secs <= 0) {
+          clearInterval(cd);
+          btn.disabled = false;
+          btn.childNodes[btn.childNodes.length - 1].textContent = ' Analyze Paths';
+          errEl.style.display = 'none';
+          // Auto-fire the analysis again
+          document.getElementById('compare-form').dispatchEvent(new Event('submit'));
+        }
+      }, 1000);
+      return;
+    }
 
-    const insights = generateInsights(scoreA, scoreB, option_a, option_b, selected);
-    Intel.renderInsights(insights, document.getElementById('compare-insights'));
+    let parsed = null;
+    let scoreA = 50, scoreB = 50, selected = 'A', reasoning = '', prosA = '', consA = '', prosB = '', consB = '';
+    const raw = aiRes.data.insight.trim();
 
-    const rs = document.getElementById('result-section');
-    rs.style.display = 'block';
-    rs.scrollIntoView({ behavior: 'smooth', block: 'start' });
-    FS.toast(`Path analysis complete! Option ${selected} recommended. <i data-lucide="scale" style="width:18px;height:18px;display:inline-block;vertical-align:middle;"></i>`, 'success');
+    try {
+      const jsonStr = raw.replace(/^```json?\s*/i, '').replace(/\s*```$/i, '').trim();
+      parsed = JSON.parse(jsonStr);
+    } catch (_) { parsed = null; }
+
+    // Detect _error signal (no API key configured)
+    if (parsed && parsed._error) {
+      errEl.innerHTML = `⚠️ AI key not configured. Add your Gemini key to <code>backend/config/secrets.php</code>.`;
+      errEl.style.display = 'flex';
+      return;
+    }
+
+    if (parsed && parsed.score_a !== undefined) {
+      scoreA    = parseInt(parsed.score_a)  || 50;
+      scoreB    = parseInt(parsed.score_b)  || 50;
+      selected  = (parsed.selected || 'A').toString().toUpperCase();
+      reasoning = parsed.reasoning || raw;
+      prosA     = parsed.pros_a || '';
+      consA     = parsed.cons_a || '';
+      prosB     = parsed.pros_b || '';
+      consB     = parsed.cons_b || '';
+    } else {
+      // Plain text response — derive winner from the text Gemini wrote
+      reasoning = raw;
+      const lower = raw.toLowerCase();
+      const mentionsB = (lower.match(/\boption b\b/g) || []).length;
+      const mentionsA = (lower.match(/\boption a\b/g) || []).length;
+      if (lower.includes('recommend option b') || lower.includes('choose option b') || lower.includes('option b is') || mentionsB > mentionsA + 1) {
+        selected = 'B'; scoreA = 42; scoreB = 68;
+      } else if (lower.includes('recommend option a') || lower.includes('choose option a') || lower.includes('option a is') || mentionsA >= mentionsB) {
+        selected = 'A'; scoreA = 68; scoreB = 42;
+      } else {
+        selected = 'A'; scoreA = 52; scoreB = 48;
+      }
+    }
+
+    // Save to backend
+    await FS.api('/api/pathcompare/index.php', 'POST', {
+      option_a, option_b,
+      selected_option: selected,
+      score_a: scoreA, score_b: scoreB,
+      reasoning, pros_a: prosA, cons_a: consA, pros_b: prosB, cons_b: consB
+    });
+
+    renderAnalysis({ score_a: scoreA, score_b: scoreB, selected, reasoning, pros_a: prosA, cons_a: consA, pros_b: prosB, cons_b: consB });
+    FS.toast(`Analysis complete! Option ${selected} recommended.`, 'success');
     loadHistory();
 
-    btn.disabled = false; btn.textContent = '<i data-lucide="scale" style="width:18px;height:18px;display:inline-block;vertical-align:middle;"></i> Analyze Paths';
+    btn.disabled = false;
+    btn.innerHTML = '<span id="btn-icon">⚖️</span> Analyze Paths';
   });
 
   await loadHistory();

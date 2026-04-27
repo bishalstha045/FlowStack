@@ -2,7 +2,7 @@
 /**
  * FlowStack — PathCompare
  * GET  → history
- * POST → { option_a, option_b } → score + winner
+ * POST → { option_a, option_b } → AI-powered analysis
  */
 require_once __DIR__ . '/../../helpers/response.php';
 require_once __DIR__ . '/../../config/db.php';
@@ -12,8 +12,28 @@ $uid = requireAuth();
 try {
     $pdo = getPDO();
 
+    // Ensure columns exist for storing analysis
+    try {
+        $pdo->exec("ALTER TABLE path_compare ADD COLUMN score_a INT DEFAULT NULL AFTER selected_option");
+        $pdo->exec("ALTER TABLE path_compare ADD COLUMN score_b INT DEFAULT NULL AFTER score_a");
+        $pdo->exec("ALTER TABLE path_compare ADD COLUMN reasoning TEXT DEFAULT NULL AFTER score_b");
+        $pdo->exec("ALTER TABLE path_compare ADD COLUMN pros_a TEXT DEFAULT NULL AFTER reasoning");
+        $pdo->exec("ALTER TABLE path_compare ADD COLUMN cons_a TEXT DEFAULT NULL AFTER pros_a");
+        $pdo->exec("ALTER TABLE path_compare ADD COLUMN pros_b TEXT DEFAULT NULL AFTER cons_a");
+        $pdo->exec("ALTER TABLE path_compare ADD COLUMN cons_b TEXT DEFAULT NULL AFTER pros_b");
+    } catch (Exception $e) { /* columns already exist */ }
+
     if ($_SERVER['REQUEST_METHOD'] === 'GET') {
-        $s = $pdo->prepare('SELECT option_a, option_b, selected_option, created_at FROM path_compare WHERE user_id=? ORDER BY created_at DESC LIMIT 20');
+        // Check if we're requesting a single comparison
+        if (isset($_GET['id'])) {
+            $s = $pdo->prepare('SELECT id, option_a, option_b, selected_option, score_a, score_b, reasoning, pros_a, cons_a, pros_b, cons_b, created_at FROM path_compare WHERE id=? AND user_id=?');
+            $s->execute([(int)$_GET['id'], $uid]);
+            $row = $s->fetch();
+            if (!$row) jsonError('Not found', 404);
+            jsonOk(['comparison' => $row]);
+        }
+
+        $s = $pdo->prepare('SELECT id, option_a, option_b, selected_option, score_a, score_b, reasoning, created_at FROM path_compare WHERE user_id=? ORDER BY created_at DESC LIMIT 20');
         $s->execute([$uid]);
         jsonOk(['history' => $s->fetchAll()]);
     }
@@ -25,25 +45,20 @@ try {
     $b    = trim($body['option_b'] ?? '');
     if (strlen($a) < 3 || strlen($b) < 3) jsonError('Both options need at least 3 characters.');
 
-    $pos = ['earn','grow','learn','build','create','lead','freedom','passion','impact','future','potential','skill','gain','opportunity','success'];
-    $neg = ['risk','debt','stress','hard','difficult','uncertain','sacrifice','pressure','fear','doubt','problem','loss','struggle'];
+    // Get scores, reasoning etc from body (frontend sends AI analysis or client-side analysis)
+    $selected  = $body['selected_option'] ?? 'A';
+    $score_a   = (int)($body['score_a'] ?? 50);
+    $score_b   = (int)($body['score_b'] ?? 50);
+    $reasoning = trim($body['reasoning'] ?? '');
+    $pros_a    = trim($body['pros_a'] ?? '');
+    $cons_a    = trim($body['cons_a'] ?? '');
+    $pros_b    = trim($body['pros_b'] ?? '');
+    $cons_b    = trim($body['cons_b'] ?? '');
 
-    function scoreText(string $t, array $pos, array $neg): array {
-        $l = strtolower($t); $p = $n = 0;
-        foreach ($pos as $k) { if (str_contains($l,$k)) $p++; }
-        foreach ($neg as $k) { if (str_contains($l,$k)) $n++; }
-        return ['positive'=>$p,'negative'=>$n,'net'=>$p-$n];
-    }
+    $pdo->prepare('INSERT INTO path_compare (user_id, option_a, option_b, selected_option, score_a, score_b, reasoning, pros_a, cons_a, pros_b, cons_b) VALUES (?,?,?,?,?,?,?,?,?,?,?)')
+        ->execute([$uid, $a, $b, $selected, $score_a, $score_b, $reasoning, $pros_a, $cons_a, $pros_b, $cons_b]);
 
-    $sa       = scoreText($a, $pos, $neg);
-    $sb       = scoreText($b, $pos, $neg);
-    $selected = $sa['net'] >= $sb['net'] ? 'A' : 'B';
-    $reason   = "Option {$selected} scores higher on growth and opportunity indicators (net: " . ($selected==='A'?$sa['net']:$sb['net']) . ").";
-
-    $pdo->prepare('INSERT INTO path_compare (user_id, option_a, option_b, selected_option) VALUES (?,?,?,?)')
-        ->execute([$uid, $a, $b, $selected]);
-
-    jsonOk(['selected'=>$selected,'reasoning'=>$reason,'score_a'=>$sa,'score_b'=>$sb], 201);
+    jsonOk(['id' => (int)$pdo->lastInsertId(), 'selected' => $selected], 201);
 
 } catch (Exception $e) {
     jsonError('Server error: ' . $e->getMessage(), 500);

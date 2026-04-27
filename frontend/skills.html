@@ -3,10 +3,142 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta name="description" content="Skills Map your proficiency and get intelligent growth recommendations.">
-  <title>Skills FlowStack</title>
+  <meta name="description" content="Skills — Map proficiency, track growth, and get AI-powered development recommendations.">
+  <title>Skills · FlowStack</title>
   <link rel="stylesheet" href="assets/css/app.css">
   <link rel="stylesheet" href="assets/css/style.css">
+  <style>
+    @keyframes fadeInUp { from{opacity:0;transform:translateY(12px)} to{opacity:1;transform:translateY(0)} }
+    @keyframes barFill  { from{width:0%} }
+    @keyframes glow     { 0%,100%{box-shadow:0 0 0 0 rgba(139,92,246,0)} 50%{box-shadow:0 0 12px 2px rgba(139,92,246,0.2)} }
+
+    /* ── Stats ──────────────────────────────────── */
+    .skill-stats { display:grid; grid-template-columns:repeat(4,1fr); gap:14px; margin-bottom:22px; }
+    @media(max-width:700px){ .skill-stats{grid-template-columns:repeat(2,1fr)} }
+    .skstat {
+      background:rgba(255,255,255,0.04); border:1px solid rgba(255,255,255,0.08);
+      border-radius:16px; padding:18px 16px; position:relative; overflow:hidden;
+      animation:fadeInUp .3s ease;
+    }
+    .skstat::before { content:''; position:absolute; top:0; left:0; width:100%; height:3px; }
+    .skstat.sk-avg::before    { background:var(--p); }
+    .skstat.sk-expert::before { background:var(--success); }
+    .skstat.sk-inter::before  { background:#f59e0b; }
+    .skstat.sk-begin::before  { background:var(--danger); }
+    .skstat-icon { font-size:1.4rem; margin-bottom:6px; display:block; }
+    .skstat-val  { font-size:2rem; font-weight:800; line-height:1; color:var(--tx); }
+    .skstat-lbl  { font-size:.75rem; text-transform:uppercase; letter-spacing:.05em; color:var(--tx3); margin-top:4px; }
+
+    /* ── AI card ──────────────────────────────────*/
+    .ai-insight-card {
+      position:relative; background:rgba(139,92,246,0.06);
+      border:1px solid rgba(139,92,246,0.2); border-left:4px solid var(--p);
+      border-radius:16px; padding:20px 22px; margin-bottom:22px;
+      animation:fadeInUp .35s ease;
+    }
+    .ai-badge {
+      position:absolute; top:14px; right:14px;
+      background:rgba(139,92,246,0.18); color:var(--p);
+      border:1px solid rgba(139,92,246,0.3); border-radius:20px;
+      padding:3px 10px; font-size:.72rem; font-weight:600;
+    }
+    .ai-insight-text { color:var(--tx2); font-size:.88rem; line-height:1.8; margin-top:8px; white-space:pre-line; }
+    .ai-loading { display:flex; align-items:center; gap:10px; color:var(--tx3); font-size:.85rem; }
+    .ai-error   { background:rgba(245,158,11,.08); border:1px solid rgba(245,158,11,.25); border-radius:10px;
+                  padding:10px 14px; color:var(--warning); font-size:.83rem;
+                  display:flex; align-items:center; justify-content:space-between; gap:10px; }
+
+    /* ── Add form ──────────────────────────────── */
+    .add-skill-card {
+      background:rgba(255,255,255,0.03); border:1px solid rgba(255,255,255,0.08);
+      border-radius:16px; padding:20px; margin-bottom:22px;
+    }
+    .add-skill-row {
+      display:grid; grid-template-columns:1fr 200px auto; gap:12px; align-items:flex-end;
+    }
+    @media(max-width:640px){ .add-skill-row{grid-template-columns:1fr;} }
+    .level-display-row { display:flex; align-items:center; justify-content:space-between; margin-bottom:6px; }
+    .level-badge {
+      font-size:.78rem; font-weight:700; padding:2px 8px; border-radius:10px;
+      background:rgba(139,92,246,0.12); color:var(--p);
+    }
+
+    /* ── Skill item ──────────────────────────────── */
+    .skill-item {
+      display:flex; align-items:center; gap:14px;
+      background:rgba(255,255,255,0.03); border:1px solid rgba(255,255,255,0.07);
+      border-radius:14px; padding:16px; margin-bottom:10px;
+      transition:all .2s; animation:fadeInUp .25s ease;
+    }
+    .skill-item:hover { background:rgba(255,255,255,0.055); border-color:rgba(255,255,255,0.12); }
+
+    .skill-rank { width:32px; height:32px; border-radius:50%; display:flex; align-items:center;
+                  justify-content:center; font-size:.78rem; font-weight:800; flex-shrink:0;
+                  background:rgba(255,255,255,0.06); color:var(--tx3); }
+    .skill-rank.gold   { background:rgba(245,158,11,0.15); color:#f59e0b; }
+    .skill-rank.silver { background:rgba(156,163,175,0.15); color:#9ca3af; }
+    .skill-rank.bronze { background:rgba(180,120,60,0.15); color:#b47a3c; }
+
+    .skill-info { flex:1; min-width:0; }
+    .skill-name-row { display:flex; align-items:center; justify-content:space-between; margin-bottom:8px; }
+    .skill-name { font-weight:700; font-size:.95rem; color:var(--tx); }
+    .skill-tier {
+      font-size:.72rem; padding:2px 8px; border-radius:10px; font-weight:600;
+      white-space:nowrap;
+    }
+    .skill-tier.expert { background:rgba(16,185,129,0.12); color:var(--success); }
+    .skill-tier.inter  { background:rgba(139,92,246,0.12); color:var(--p); }
+    .skill-tier.begin  { background:rgba(245,158,11,0.12); color:#f59e0b; }
+
+    .skill-progress-row { display:flex; align-items:center; gap:10px; }
+    .skill-level-num { font-size:.88rem; font-weight:800; color:var(--tx); min-width:32px; }
+    .progress-wrap { flex:1; height:6px; background:rgba(255,255,255,0.07); border-radius:6px; overflow:hidden; }
+    .progress-bar  { height:100%; border-radius:6px; transition:width .6s ease; animation:barFill .6s ease; }
+    .progress-bar.green { background:linear-gradient(90deg,#10b981,#34d399); }
+    .progress-bar.amber { background:linear-gradient(90deg,#f59e0b,#fbbf24); }
+    .progress-bar.red   { background:linear-gradient(90deg,#ef4444,#f87171); }
+
+    .skill-slider-row { display:flex; align-items:center; gap:8px; margin-top:8px; }
+    .skill-slider { flex:1; accent-color:var(--p); }
+
+    .btn-icon { width:32px; height:32px; border-radius:8px; border:1px solid rgba(255,255,255,0.1);
+                background:transparent; color:var(--tx3); cursor:pointer; font-size:.9rem;
+                display:flex; align-items:center; justify-content:center; transition:all .2s; }
+    .btn-icon:hover { background:rgba(239,68,68,0.12); border-color:rgba(239,68,68,0.3); color:var(--danger); }
+
+    /* ── Sort/Filter toolbar ────────────────────── */
+    .skill-toolbar { display:flex; gap:10px; align-items:center; margin-bottom:14px; flex-wrap:wrap; }
+    .skill-search  { flex:1; min-width:140px; background:rgba(255,255,255,0.05);
+                     border:1px solid rgba(255,255,255,0.1); border-radius:10px;
+                     padding:8px 14px; color:var(--tx); font-size:.88rem; outline:none; }
+    .skill-search:focus { border-color:var(--p); }
+    .sort-btn { padding:7px 14px; border-radius:10px; border:1px solid rgba(255,255,255,0.1);
+                background:rgba(255,255,255,0.04); color:var(--tx2); font-size:.82rem;
+                cursor:pointer; transition:all .2s; }
+    .sort-btn.active, .sort-btn:hover { background:rgba(139,92,246,0.15); border-color:var(--p); color:var(--p); }
+
+    /* ── AI Coach Roadmap ───────────────────────── */
+    .btn-ai-coach {
+      font-size:.75rem; font-weight:700; padding:4px 10px; border-radius:12px;
+      background:rgba(139,92,246,0.1); color:var(--p); border:1px solid rgba(139,92,246,0.3);
+      cursor:pointer; display:flex; align-items:center; gap:6px; transition:all .2s;
+    }
+    .btn-ai-coach:hover { background:rgba(139,92,246,0.2); box-shadow:0 0 10px rgba(139,92,246,0.3); }
+    .skill-roadmap-box {
+      margin-top:12px; padding:16px; background:rgba(0,0,0,0.2); border:1px solid rgba(139,92,246,0.2);
+      border-radius:12px; display:none; position:relative; overflow:hidden;
+      border-left:3px solid var(--p);
+    }
+    .skill-roadmap-box::before {
+      content:''; position:absolute; top:0; left:0; width:100%; height:100%;
+      background:linear-gradient(45deg, transparent, rgba(139,92,246,0.03)); pointer-events:none;
+    }
+    .rm-title { font-size:.85rem; font-weight:700; color:var(--tx); margin-bottom:8px; display:flex; align-items:center; gap:6px; }
+    .rm-content { font-size:.85rem; color:var(--tx2); line-height:1.7; white-space:pre-line; }
+
+    .empty-state { text-align:center; padding:48px 20px; color:var(--tx3); }
+    .empty-state h3 { color:var(--tx2); margin-bottom:8px; }
+  </style>
 </head>
 <body>
 <div id="fs-loading"><div class="fs-spinner"></div><span class="loading-text">Loading skills…</span></div>
@@ -20,57 +152,74 @@
 
       <div class="page-header">
         <div class="page-header-text">
-          <h1>Skills</h1>
-          <p>Map your proficiency, identify gaps, and get smart growth recommendations</p>
+          <h1>🎯 Skills Map</h1>
+          <p>Map proficiency, track growth velocity, and get AI-powered development recommendations</p>
         </div>
       </div>
 
-      <!-- Skill score card -->
-      <div class="prod-score-card" id="skill-score-card" style="display:none">
-        <div id="skill-gauge"></div>
-        <div class="prod-score-right">
-          <div class="prod-score-title">SKILL PROFILE</div>
-          <div class="prod-score-val" id="ss-avg"></div>
-          <div class="prod-score-sub" id="ss-sub">Average proficiency</div>
-          <div style="margin-top:10px">
-            <div class="skill-dist" id="skill-dist"></div>
-          </div>
-          <div class="prod-metric-row">
-            <div class="prod-metric"><div class="val" id="ss-expert"></div><div class="lbl">Expert (8+)</div></div>
-            <div class="prod-metric"><div class="val" id="ss-inter"></div><div class="lbl">Intermediate</div></div>
-            <div class="prod-metric"><div class="val" id="ss-begin"></div><div class="lbl">Beginner</div></div>
-            <div class="prod-metric"><div class="val" id="ss-total"></div><div class="lbl">Total Skills</div></div>
-          </div>
+      <!-- Stats -->
+      <div class="skill-stats" id="skill-stats" style="display:none">
+        <div class="skstat sk-avg">
+          <span class="skstat-icon">📊</span>
+          <div class="skstat-val" id="sk-avg">0</div>
+          <div class="skstat-lbl">Avg Level / 10</div>
+        </div>
+        <div class="skstat sk-expert">
+          <span class="skstat-icon">🏆</span>
+          <div class="skstat-val" id="sk-expert">0</div>
+          <div class="skstat-lbl">Expert (8+)</div>
+        </div>
+        <div class="skstat sk-inter">
+          <span class="skstat-icon">📈</span>
+          <div class="skstat-val" id="sk-inter">0</div>
+          <div class="skstat-lbl">Intermediate (5–7)</div>
+        </div>
+        <div class="skstat sk-begin">
+          <span class="skstat-icon">📚</span>
+          <div class="skstat-val" id="sk-begin">0</div>
+          <div class="skstat-lbl">Beginner (1–4)</div>
         </div>
       </div>
 
-      <!-- Intelligence panel -->
-      <div class="intel-panel" id="skill-intel-panel" style="display:none">
-        <div class="intel-header">
-          <h2><i data-lucide="brain" style="width:18px;height:18px;display:inline-block;vertical-align:middle;"></i> Skill Intelligence</h2>
-          <span class="intel-badge" id="sk-badge"></span>
+      <!-- AI Insight -->
+      <div id="skill-ai-panel" style="display:none">
+        <div class="ai-insight-card">
+          <span class="ai-badge">✨ Gemini AI</span>
+          <div style="font-weight:700;font-size:.9rem;color:var(--tx);margin-bottom:6px">🧠 Skill Intelligence</div>
+          <div id="skill-ai-content" class="ai-insight-text"></div>
         </div>
-        <div id="skill-insights"></div>
       </div>
 
       <!-- Add skill -->
-      <div class="card" style="margin-bottom:20px">
-        <div class="card-title"><span>Add Skill</span></div>
+      <div class="add-skill-card">
+        <div style="font-weight:700;font-size:.95rem;margin-bottom:14px;color:var(--tx)">➕ Add Skill</div>
         <form id="add-form" novalidate>
-          <div style="display:grid;grid-template-columns:1fr auto auto;gap:12px;align-items:flex-end">
+          <div class="add-skill-row">
             <div class="form-group" style="margin-bottom:0">
               <label for="skill-name">Skill Name</label>
-              <input type="text" id="skill-name" class="form-control" placeholder="e.g. JavaScript, Piano, Project Management…" maxlength="150" required>
+              <input type="text" id="skill-name" class="form-control"
+                     placeholder="e.g. JavaScript, Piano, Public Speaking…" maxlength="150" required>
             </div>
-            <div class="form-group" style="margin-bottom:0;min-width:190px">
-              <label>Level: <span class="range-value" id="level-display">5</span>/10</label>
+            <div class="form-group" style="margin-bottom:0">
+              <div class="level-display-row">
+                <label>Proficiency Level</label>
+                <span class="level-badge" id="level-badge">5 — Intermediate</span>
+              </div>
               <input type="range" id="skill-level" class="form-control" min="1" max="10" value="5"
-                     oninput="document.getElementById('level-display').textContent=this.value">
+                     oninput="updateLevelBadge(this.value)">
             </div>
             <button type="submit" id="btn-add" class="btn btn-primary" style="margin-bottom:0;align-self:flex-end">+ Add</button>
           </div>
           <div id="add-error" class="alert alert-danger" style="display:none;margin-top:10px"></div>
         </form>
+      </div>
+
+      <!-- Toolbar -->
+      <div class="skill-toolbar">
+        <input type="text" class="skill-search" id="skill-search" placeholder="🔍 Search skills…" oninput="renderSkills()">
+        <button class="sort-btn active" id="sort-level" onclick="setSort('level')">↓ By Level</button>
+        <button class="sort-btn" id="sort-name" onclick="setSort('name')">A–Z</button>
+        <button class="sort-btn" id="sort-tier" onclick="setSort('tier')">By Tier</button>
       </div>
 
       <div class="section-title">
@@ -91,75 +240,165 @@
   if (!user) return;
   FS.initLayout(user, 'skills');
 
-  async function loadSkills() {
+  let allSkills = [], sortMode = 'level';
+
+  function updateLevelBadge(v) {
+    const badges = {1:'Novice',2:'Novice',3:'Novice',4:'Beginner',5:'Intermediate',6:'Intermediate',7:'Intermediate',8:'Expert',9:'Expert',10:'Master'};
+    document.getElementById('level-badge').textContent = `${v} — ${badges[v]}`;
+  }
+  window.updateLevelBadge = updateLevelBadge;
+
+  function setSort(mode) {
+    sortMode = mode;
+    ['level','name','tier'].forEach(m => {
+      document.getElementById('sort-'+m)?.classList.toggle('active', m === mode);
+    });
+    renderSkills();
+  }
+  window.setSort = setSort;
+
+  function tierOf(l) {
+    l = +l;
+    if (l >= 8) return {label:'Expert', cls:'expert', order:0};
+    if (l >= 5) return {label:'Intermediate', cls:'inter', order:1};
+    return {label:'Beginner', cls:'begin', order:2};
+  }
+
+  function rankIcon(i) {
+    if (i === 0) return {cls:'gold',   icon:'🥇'};
+    if (i === 1) return {cls:'silver', icon:'🥈'};
+    if (i === 2) return {cls:'bronze', icon:'🥉'};
+    return {cls:'', icon:(i+1)+'.'};
+  }
+
+  function barCls(l) { return +l >= 8 ? 'green' : +l >= 5 ? '' : 'amber'; }
+
+  function renderSkills() {
+    const q = document.getElementById('skill-search').value.toLowerCase();
+    let list = allSkills.filter(s => !q || s.skill_name.toLowerCase().includes(q));
+
+    if (sortMode === 'level') list = [...list].sort((a,b) => +b.proficiency_level - +a.proficiency_level);
+    else if (sortMode === 'name') list = [...list].sort((a,b) => a.skill_name.localeCompare(b.skill_name));
+    else if (sortMode === 'tier') list = [...list].sort((a,b) => tierOf(a.proficiency_level).order - tierOf(b.proficiency_level).order);
+
     const cont = document.getElementById('skills-container');
-    cont.innerHTML = '<div style="display:flex;flex-direction:column;gap:8px">' +
-      [1,2,3].map(() => '<div class="skeleton" style="height:62px;border-radius:var(--r3)"></div>').join('') + '</div>';
-
-    const res = await FS.api('/api/skills/index.php');
-    if (!res.ok) { cont.innerHTML = '<div class="alert alert-danger">Failed to load.</div>'; return; }
-
-    const d = res.data;
-    const skills = d.skills || [];
-    document.getElementById('skill-count-badge').innerHTML = `<span class="badge badge-primary">${skills.length} skill${skills.length!==1?'s':''}</span>`;
-
-    // Intelligence
-    const intel = Intel.skills(skills);
-
-    if (intel && skills.length >= 1) {
-      document.getElementById('skill-score-card').style.display = 'flex';
-      Intel.renderScoreGauge(intel.metrics.score, 'Score', document.getElementById('skill-gauge'));
-      document.getElementById('ss-avg').textContent   = intel.metrics.avg + '/10';
-      document.getElementById('ss-sub').textContent   = 'Average across ' + intel.metrics.total + ' skills';
-      document.getElementById('ss-expert').textContent = intel.metrics.expert;
-      document.getElementById('ss-inter').textContent  = intel.metrics.intermediate;
-      document.getElementById('ss-begin').textContent  = intel.metrics.beginner;
-      document.getElementById('ss-total').textContent  = intel.metrics.total;
-
-      document.getElementById('skill-dist').innerHTML = intel.distribution
-        .filter(d => d.count > 0)
-        .map(d => `<div class="dist-pill dist-${d.color}">${d.label}: ${d.count}</div>`).join('');
-
-      document.getElementById('skill-intel-panel').style.display = 'block';
-      const badge = document.getElementById('sk-badge');
-      badge.textContent = +intel.metrics.avg >= 6.5 ? 'Strong Profile' : +intel.metrics.avg >= 5 ? 'Building' : 'Early Stage';
-      badge.className = 'intel-badge badge-' + (+intel.metrics.avg >= 6.5 ? 'success' : +intel.metrics.avg >= 5 ? 'warn' : 'danger');
-      Intel.renderInsights(intel.insights, document.getElementById('skill-insights'));
-    }
-
-    if (!skills.length) {
+    if (!list.length) {
       cont.innerHTML = `<div class="empty-state">
-        <div class="empty-icon"><i data-lucide="award" style="width:18px;height:18px;display:inline-block;vertical-align:middle;"></i></div>
-        <h3>No skills mapped yet</h3>
-        <p>Add at least 5 skills to get a meaningful proficiency map and intelligent recommendations.</p>
+        <div style="font-size:2.5rem;margin-bottom:12px">🎯</div>
+        <h3>${allSkills.length ? 'No matching skills' : 'No skills mapped yet'}</h3>
+        <p>${allSkills.length ? 'Try a different search term.' : 'Add at least 5 skills to get a meaningful proficiency map and intelligent recommendations.'}</p>
       </div>`;
       return;
     }
 
-    // Sort by level desc
-    const sorted = [...skills].sort((a, b) => +b.proficiency_level - +a.proficiency_level);
-    const color  = l => +l >= 8 ? 'var(--success)' : +l >= 5 ? 'var(--p)' : 'var(--warning)';
-    const barCls = l => +l >= 8 ? 'green' : +l < 5 ? 'amber' : '';
-
-    cont.innerHTML = '<div style="display:flex;flex-direction:column;gap:8px">' +
-      sorted.map(s => `
-        <div class="skill-item">
-          <div style="flex:1;min-width:0">
-            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">
-              <div class="skill-name">${FS.escape(s.skill_name)}</div>
-              <div class="skill-level" style="color:${color(s.proficiency_level)}">${s.proficiency_level}/10</div>
-            </div>
+    cont.innerHTML = list.map((s, i) => {
+      const tier = tierOf(s.proficiency_level);
+      const rank = rankIcon(i);
+      return `<div class="skill-item-container" style="margin-bottom:10px;">
+      <div class="skill-item" style="margin-bottom:0; border-radius:14px;">
+        <div class="skill-rank ${rank.cls}">${rank.icon}</div>
+        <div class="skill-info">
+          <div class="skill-name-row">
+            <div class="skill-name">${FS.escape(s.skill_name)}</div>
+            <span class="skill-tier ${tier.cls}">${tier.label}</span>
+          </div>
+          <div class="skill-progress-row">
+            <div class="skill-level-num" id="sl-${s.id}">${s.proficiency_level}/10</div>
             <div class="progress-wrap">
-              <div class="progress-bar ${barCls(s.proficiency_level)}" style="width:${+s.proficiency_level * 10}%"></div>
-            </div>
-            <div style="font-size:.72rem;color:var(--tx3);margin-top:3px">
-              ${+s.proficiency_level >= 8 ? '<i data-lucide="award" style="width:18px;height:18px;display:inline-block;vertical-align:middle;"></i> Expert competitive advantage' :
-                +s.proficiency_level >= 5 ? '📈 Intermediate  keep practicing' :
-                '📚 Beginner dedicated study needed'}
+              <div class="progress-bar ${barCls(s.proficiency_level)}" id="sb-${s.id}" style="width:${pct}%"></div>
             </div>
           </div>
-          <button class="btn btn-danger btn-sm" onclick="delSkill(${s.id})" title="Delete" style="margin-left:10px">✕</button>
-        </div>`).join('') + '</div>';
+          <div class="skill-slider-row">
+            <input type="range" class="skill-slider" min="1" max="10" value="${s.proficiency_level}"
+                   oninput="liveUpdateSkill(${s.id},this.value)"
+                   onchange="updateSkillLevel(${s.id},this.value)">
+            <button class="btn-ai-coach" onclick="generateRoadmap(${s.id}, '${FS.escape(s.skill_name).replace(/'/g,"\\'")}', document.getElementById('sb-${s.id}').style.width)">🧠 AI Coach</button>
+          </div>
+        </div>
+        <button class="btn-icon" onclick="delSkill(${s.id})" title="Delete skill">✕</button>
+      </div>
+      <div class="skill-roadmap-box" id="roadmap-${s.id}"></div>
+      </div>`;
+    }).join('');
+  }
+
+  window.liveUpdateSkill = function (id, v) {
+    const lvl = +v;
+    const el = document.getElementById('sl-'+id);
+    const bar = document.getElementById('sb-'+id);
+    const st  = document.getElementById('st-'+id);
+    if (el) el.textContent = lvl + '/10';
+    if (bar) {
+      bar.style.width = (lvl * 10) + '%';
+      bar.className = 'progress-bar ' + barCls(lvl);
+    }
+  };
+
+  window.generateRoadmap = async function(id, name, widthStr) {
+    const box = document.getElementById('roadmap-' + id);
+    if (box.style.display === 'block') {
+      box.style.display = 'none';
+      return;
+    }
+    
+    // Calculate level from width
+    const level = Math.round(parseFloat(widthStr) / 10) || 5;
+    
+    box.style.display = 'block';
+    box.innerHTML = '<div class="ai-loading"><div class="fs-spinner" style="width:14px;height:14px;border-width:2px;border-top-color:var(--p)"></div><span>Gemini is generating your personalized training plan...</span></div>';
+    
+    const res = await FS.api('/api/ai/insight.php?force=1', 'POST', {
+      module: 'skill_roadmap',
+      data: { skill_name: name, level: level }
+    });
+    
+    if (res.ok && res.data.insight) {
+      box.innerHTML = `<div class="rm-title">⚡ Level Up Plan: ${FS.escape(name)}</div>
+                       <div class="rm-content">${FS.escape(res.data.insight)}</div>`;
+    } else {
+      box.innerHTML = `<div class="ai-error"><span>⚠️ Failed to generate plan.</span><button class="btn btn-sm" onclick="generateRoadmap(${id}, '${name.replace(/'/g,"\\'")}', '${widthStr}')">Retry</button></div>`;
+    }
+  };
+
+  async function loadSkills() {
+    const cont = document.getElementById('skills-container');
+    cont.innerHTML = '<div style="display:flex;flex-direction:column;gap:10px">' +
+      [1,2,3].map(() => '<div class="skeleton" style="height:88px;border-radius:14px"></div>').join('') + '</div>';
+
+    const res = await FS.api('/api/skills/index.php');
+    if (!res.ok) { cont.innerHTML = '<div class="alert alert-danger">Failed to load.</div>'; return; }
+
+    allSkills = res.data.skills || [];
+    document.getElementById('skill-count-badge').innerHTML =
+      `<span class="badge badge-primary">${allSkills.length} skill${allSkills.length!==1?'s':''}</span>`;
+
+    if (allSkills.length) {
+      const intel = Intel.skills(allSkills);
+      document.getElementById('skill-stats').style.display = 'grid';
+      document.getElementById('sk-avg').textContent    = intel?.metrics?.avg || 0;
+      document.getElementById('sk-expert').textContent = intel?.metrics?.expert || 0;
+      document.getElementById('sk-inter').textContent  = intel?.metrics?.intermediate || 0;
+      document.getElementById('sk-begin').textContent  = intel?.metrics?.beginner || 0;
+
+      document.getElementById('skill-ai-panel').style.display = 'block';
+      document.getElementById('skill-ai-content').innerHTML =
+        '<div class="ai-loading"><div class="fs-spinner" style="width:14px;height:14px;border-width:2px;border-top-color:var(--p)"></div><span>Gemini AI is analyzing your skill profile…</span></div>';
+
+      const skillNames = allSkills.map(s => s.skill_name + ' (level ' + s.proficiency_level + ')').join(', ');
+      FS.api('/api/ai/insight.php', 'POST', { module: 'skills', data: {
+        skills: skillNames, avg: intel.metrics.avg, expert: intel.metrics.expert,
+        intermediate: intel.metrics.intermediate, beginner: intel.metrics.beginner, total: intel.metrics.total
+      }}).then(aiRes => {
+        if (aiRes.ok && aiRes.data.insight) {
+          document.getElementById('skill-ai-content').textContent = aiRes.data.insight;
+        } else {
+          document.getElementById('skill-ai-content').innerHTML =
+            '<div class="ai-error"><span>⚠️ Could not load AI insight.</span><button class="btn btn-sm btn-secondary" onclick="loadSkills()">Retry</button></div>';
+        }
+      });
+    }
+
+    renderSkills();
   }
 
   window.delSkill = async function (id) {
@@ -167,6 +406,12 @@
     const res = await FS.api('/api/skills/index.php?delete=1', 'POST', { skill_id: id });
     if (res.ok) { FS.toast('Skill deleted.', 'success'); loadSkills(); }
     else FS.toast('Failed.', 'danger');
+  };
+
+  window.updateSkillLevel = async function (id, level) {
+    const res = await FS.api('/api/skills/index.php?update=1', 'POST', { skill_id: id, proficiency_level: parseInt(level) });
+    if (res.ok) FS.toast(`Level updated to ${level}/10`, 'success');
+    else FS.toast('Failed to update.', 'danger');
   };
 
   document.getElementById('add-form').addEventListener('submit', async function (e) {
@@ -180,10 +425,10 @@
     btn.disabled = true; btn.textContent = 'Adding…';
     const res = await FS.api('/api/skills/index.php', 'POST', { skill_name, proficiency_level });
     if (res.ok) {
-      FS.toast('Skill added! <i data-lucide="award" style="width:18px;height:18px;display:inline-block;vertical-align:middle;"></i>', 'success');
+      FS.toast('Skill added! 🎯', 'success');
       document.getElementById('skill-name').value = '';
       document.getElementById('skill-level').value = '5';
-      document.getElementById('level-display').textContent = '5';
+      document.getElementById('level-badge').textContent = '5 — Intermediate';
       loadSkills();
     } else {
       errEl.textContent = res.data.error || 'Failed.';
