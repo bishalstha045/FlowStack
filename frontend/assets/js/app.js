@@ -1,5 +1,5 @@
 /**
- * FlowStack — app.js
+ * FlowStack app.js
  * Core engine: API wrapper, auth guard, layout injector, utilities.
  */
 ;(function (window) {
@@ -182,8 +182,6 @@ FS.initLayout = function (user, activePage) {
 
     const sb = document.getElementById('fs-sidebar');
     if (sb) {
-        sb.style.backdropFilter = 'blur(20px)';
-        sb.style.background = 'var(--bg-glass)';
         
         sb.innerHTML = `
             <div class="sidebar-logo">

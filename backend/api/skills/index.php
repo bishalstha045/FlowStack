@@ -1,6 +1,6 @@
 <?php
 /**
- * FlowStack — Skills CRUD + History Tracking  
+ * FlowStack Skills CRUD + History Tracking  
  * GET  → list + avg
  * POST → add { skill_name, proficiency_level }
  * POST ?delete=1 → delete { skill_id }

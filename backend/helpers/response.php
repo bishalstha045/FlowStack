@@ -1,6 +1,6 @@
 <?php
 /**
- * FlowStack — Backend Shared Helpers
+ * FlowStack Backend Shared Helpers
  * Every API file includes this FIRST.
  *
  * Handles: session cookie config, session start, JSON helpers, auth guard.

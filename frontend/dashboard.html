@@ -3,41 +3,54 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta name="description" content="FlowStack Dashboard — your intelligent behavioral analytics hub with XP tracking.">
+  <meta name="description" content="FlowStack Dashboard your intelligent behavioral analytics hub with XP tracking.">
   <title>Dashboard FlowStack</title>
   <link rel="stylesheet" href="assets/css/app.css">
-  <link rel="stylesheet" href="assets/css/style.css">
+  <link rel="stylesheet" href="assets/css/style.css?v=3">
   <style>
     @keyframes fadeInUp { from{opacity:0;transform:translateY(15px)} to{opacity:1;transform:translateY(0)} }
     .ai-insight-card {
       position: relative;
-      background: linear-gradient(135deg, rgba(255,255,255,0.05), rgba(255,255,255,0.01));
-      border: 1px solid var(--border-light);
+      background: var(--surface2);
+      border: 1px solid var(--border-glow);
       border-left: 3px solid var(--p);
       border-radius: var(--r3);
       padding: 22px 24px;
       animation: fadeInUp .4s cubic-bezier(0.2, 0.8, 0.2, 1);
       box-shadow: var(--s1);
-      backdrop-filter: blur(8px);
     }
     .ai-badge {
       position: absolute;
       top: 14px; right: 16px;
-      background: linear-gradient(135deg, rgba(139,92,246,0.15), rgba(219,39,119,0.15));
-      color: #fff;
-      border: 1px solid rgba(255,255,255,0.1);
+      background: var(--p-light);
+      color: var(--p);
+      border: 1px solid var(--border-glow);
       border-radius: 20px;
       padding: 4px 12px;
       font-size: .72rem;
       font-weight: 700;
       letter-spacing: .5px;
-      box-shadow: 0 4px 10px rgba(0,0,0,0.1);
     }
     .ai-insight-text { font-style: normal; color: var(--tx); font-size: .95rem; line-height: 1.7; margin: 12px 0 0; }
     .ai-loading { display:flex; align-items:center; gap:12px; color:var(--tx2); font-size:.9rem; font-weight:500; }
     .ai-error { background:rgba(239,68,68,.1); border:1px solid rgba(239,68,68,.3); border-radius:var(--r2);
       padding:14px 18px; color:var(--danger); font-size:.88rem;
       display:flex; align-items:center; justify-content:space-between; gap:12px; }
+
+    /* Force override the flowscore panel background to be premium glass instead of harsh purple */
+    .flowscore-panel {
+      background: linear-gradient(135deg, rgba(99,102,241,0.05), rgba(56,189,248,0.05)), var(--card-bg) !important;
+      border: 1px solid rgba(99,102,241,0.2) !important;
+      backdrop-filter: blur(24px) !important;
+      -webkit-backdrop-filter: blur(24px) !important;
+    }
+    .flowscore-panel::before {
+      content: ''; position: absolute; top: 0; right: 0; bottom: 0; left: 0;
+      background: radial-gradient(circle at top right, rgba(99,102,241,0.15), transparent 50%),
+                  radial-gradient(circle at bottom left, rgba(56,189,248,0.1), transparent 50%) !important;
+      pointer-events: none; z-index: 0;
+    }
+    .flowscore-left, .flowscore-right { position: relative; z-index: 1; }
   </style>
 </head>
 <body>

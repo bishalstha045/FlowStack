@@ -2,7 +2,7 @@
  * FlowStack Intelligence Engine v1
  * =================================
  * All analytical logic lives here. Backend provides raw data only.
- * This module runs entirely in the browser — no extra server calls.
+ * This module runs entirely in the browser no extra server calls.
  *
  * Exports: window.Intel = { habits, focus, decisions, skills, synthesize, render }
  */
@@ -359,7 +359,7 @@
   };
 
   // ─────────────────────────────────────────────────────────────────────────────
-  // DASHBOARD SYNTHESIS — Combine all module scores into a FlowScore
+  // DASHBOARD SYNTHESIS Combine all module scores into a FlowScore
   // ─────────────────────────────────────────────────────────────────────────────
   Intel.synthesize = function (habitResult, focusResult, decisionResult, skillResult) {
     const scores = [];
@@ -413,8 +413,8 @@
   };
 
   // ─────────────────────────────────────────────────────────────────────────────
-  // RENDER HELPERS — Build insight card HTML
-  // ─────────────────────────────────────────────────────────────────────────────
+  // RENDER HELPERS Build insight card HTML
+  // ────────────────────────────────────────────────────────────────────────────
   Intel.renderInsights = function (insights, container) {
     if (!container) return;
     if (!insights || !insights.length) {

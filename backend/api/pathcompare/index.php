@@ -1,6 +1,6 @@
 <?php
 /**
- * FlowStack — PathCompare
+ * FlowStack PathCompare
  * GET  → history
  * POST → { option_a, option_b } → AI-powered analysis
  */

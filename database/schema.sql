@@ -1,5 +1,5 @@
 -- ============================================================
--- FlowStack — Full Database Schema
+-- FlowStack Full Database Schema
 -- MySQL 8.0+ | utf8mb4 | InnoDB
 -- Location: /database/schema.sql
 --
@@ -9,11 +9,11 @@
 --   Option 3: Visit http://localhost/FlowStack/setup_db.php
 -- ============================================================
 
-CREATE DATABASE IF NOT EXISTS flowstack
-  CHARACTER SET utf8mb4
-  COLLATE utf8mb4_unicode_ci;
+-- CREATE DATABASE IF NOT EXISTS flowstack
+--   CHARACTER SET utf8mb4
+--   COLLATE utf8mb4_unicode_ci;
 
-USE flowstack;
+-- USE flowstack; -- Commented out for InfinityFree compatibility (causes Access Denied errors)
 
 -- ── users ─────────────────────────────────────────────────────
 CREATE TABLE IF NOT EXISTS users (

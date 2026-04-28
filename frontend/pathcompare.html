@@ -3,10 +3,10 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta name="description" content="Path Compare — AI-powered scored comparison of two life paths with pros, cons, and clear recommendation.">
+  <meta name="description" content="Path Compare AI-powered scored comparison of two life paths with pros, cons, and clear recommendation.">
   <title>Path Compare · FlowStack</title>
   <link rel="stylesheet" href="assets/css/app.css">
-  <link rel="stylesheet" href="assets/css/style.css">
+  <link rel="stylesheet" href="assets/css/style.css?v=3">
   <style>
     @keyframes fadeInUp {
       from { opacity: 0; transform: translateY(14px); }
@@ -130,7 +130,7 @@
       <div class="page-header">
         <div class="page-header-text">
           <h1>Path Compare</h1>
-          <p>Enter two options — get an AI-scored comparison with clear recommendation</p>
+          <p>Enter two options get an AI-scored comparison with clear recommendation</p>
         </div>
       </div>
 
@@ -142,16 +142,16 @@
             <div class="form-group" style="margin-bottom:0">
               <div class="pc-option-label a">⬡ Option A</div>
               <textarea id="option-a" class="form-control" rows="5"
-                placeholder="e.g. Accept job offer at Company X — stable salary, remote work, good culture…" required></textarea>
+                placeholder="e.g. Accept job offer at Company X stable salary, remote work, good culture…" required></textarea>
             </div>
             <div class="form-group" style="margin-bottom:0">
               <div class="pc-option-label b">⬡ Option B</div>
               <textarea id="option-b" class="form-control" rows="5"
-                placeholder="e.g. Go freelance — freedom to choose projects, income uncertainty…" required></textarea>
+                placeholder="e.g. Go freelance freedom to choose projects, income uncertainty…" required></textarea>
             </div>
           </div>
           <p style="font-size:.8rem;color:var(--tx3);margin:10px 0 0">
-            💡 Be specific — mention time, money, risk, learning, and lifestyle impact for the most accurate scoring.
+            💡 Be specific mention time, money, risk, learning, and lifestyle impact for the most accurate scoring.
           </p>
           <div id="compare-error" class="alert alert-danger" style="display:none;margin-top:10px"></div>
           <button type="submit" class="btn btn-primary" id="btn-compare">
@@ -256,7 +256,7 @@ function renderAnalysis(data) {
     <div class="winner-trophy">🏆</div>
     <div class="winner-text">
       <h3>Recommended: Option ${FS.escape(selected)}</h3>
-      <p>Option ${FS.escape(selected)} scores ${selected === 'A' ? scoreA : scoreB} vs ${selected === 'A' ? scoreB : scoreA} — the stronger choice based on growth, reversibility and risk.</p>
+      <p>Option ${FS.escape(selected)} scores ${selected === 'A' ? scoreA : scoreB} vs ${selected === 'A' ? scoreB : scoreA} the stronger choice based on growth, reversibility and risk.</p>
     </div>`;
 
   document.getElementById('reasoning-text').textContent = reasoning || 'Analysis complete.';
@@ -319,7 +319,7 @@ window.viewComparison = async function(id) {
     btnIcon.outerHTML = `<span id="btn-icon"><span class="fs-spinner" style="width:14px;height:14px;border-width:2px;display:inline-block;vertical-align:middle;margin-right:4px"></span></span>`;
     btn.childNodes[btn.childNodes.length - 1].textContent = ' AI is analyzing…';
 
-    // Call AI — force=1 for fresh response every time
+    // Call AI force=1 for fresh response every time
     const aiRes = await FS.api('/api/ai/insight.php?force=1', 'POST', {
       module: 'pathcompare',
       data: { option_a, option_b }
@@ -330,14 +330,14 @@ window.viewComparison = async function(id) {
     document.getElementById('btn-icon').textContent = '⚖️';
     btn.childNodes[btn.childNodes.length - 1].textContent = ' Analyze Paths';
 
-    // Handle rate limit / API error — NEVER show fake analysis
+    // Handle rate limit / API error NEVER show fake analysis
     if (!aiRes.ok || !aiRes.data?.insight) {
       const msg = aiRes.data?.error || 'Gemini AI is temporarily busy.';
       // Hide any stale old result so the user doesn't see fake data
       document.getElementById('result-section').style.display = 'none';
-      errEl.innerHTML = `⏳ Gemini is at capacity. <strong>Auto-retrying in <span id="cd-num">62</span>s — sit tight!</strong>`;
+      errEl.innerHTML = `⏳ Gemini is at capacity. <strong>Auto-retrying in <span id="cd-num">62</span>s sit tight!</strong>`;
       errEl.style.display = 'flex';
-      // 62s guaranteed reset — rate limit window is 60s
+      // 62s guaranteed reset rate limit window is 60s
       let secs = 62; btn.disabled = true;
       const cd = setInterval(() => {
         secs--;
@@ -365,9 +365,9 @@ window.viewComparison = async function(id) {
       parsed = JSON.parse(jsonStr);
     } catch (_) { parsed = null; }
 
-    // Detect _error signal (no API key configured)
+    // Detect _error signal (no API key configured or unavailable)
     if (parsed && parsed._error) {
-      errEl.innerHTML = `⚠️ AI key not configured. Add your Gemini key to <code>backend/config/secrets.php</code>.`;
+      errEl.innerHTML = `⚠️ AI is temporarily unavailable. Check your Gemini API key and quota in <code>backend/config/secrets.php</code>.`;
       errEl.style.display = 'flex';
       return;
     }
@@ -382,7 +382,7 @@ window.viewComparison = async function(id) {
       prosB     = parsed.pros_b || '';
       consB     = parsed.cons_b || '';
     } else {
-      // Plain text response — derive winner from the text Gemini wrote
+      // Plain text response derive winner from the text Gemini wrote
       reasoning = raw;
       const lower = raw.toLowerCase();
       const mentionsB = (lower.match(/\boption b\b/g) || []).length;

@@ -1,5 +1,5 @@
 /**
- * FlowStack — Main JS
+ * FlowStack Main JS
  * /assets/js/main.js
  * Sidebar toggle, mobile menu, global UI behaviors
  */
@@ -60,7 +60,7 @@
     });
 
     // ── Confirm dialogs ─────────────────────────────────────
-    // Handled inline via onclick="return confirm()" — no override needed
+    // Handled inline via onclick="return confirm()" no override needed
 
     // ── Active nav highlight fallback ───────────────────────
     // Already handled by PHP $currentPage, but this adds a JS fallback

@@ -1,5 +1,5 @@
 /**
- * FlowStack — Charts JS
+ * FlowStack Charts JS
  * /assets/js/charts.js
  * Initializes all 4 Chart.js charts on analytics.php
  * Supports live date-range switching without page reload.
@@ -187,10 +187,10 @@
                 datasets: [{
                     data:            data.data,
                     backgroundColor: [
-                        'rgba(186,117,23,0.75)',  // morning  — amber
-                        'rgba(37,99,235,0.75)',   // afternoon — blue
-                        'rgba(83,74,183,0.75)',   // evening  — purple
-                        'rgba(136,135,128,0.75)', // night    — gray
+                        'rgba(186,117,23,0.75)',  // morning  amber
+                        'rgba(37,99,235,0.75)',   // afternoon blue
+                        'rgba(83,74,183,0.75)',   // evening  purple
+                        'rgba(136,135,128,0.75)', // night    gray
                     ],
                     borderColor: ['#BA7517','#2563EB','#534AB7','#888780'],
                     borderWidth: 1,

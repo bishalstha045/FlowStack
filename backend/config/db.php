@@ -1,11 +1,11 @@
 <?php
 /**
- * FlowStack — Database Configuration
+ * FlowStack Database Configuration
  * /backend/config/db.php
  * Auto-detects: uses localhost when running on XAMPP, live DB on production.
  */
 
-// ── Session cookie path — only set if response.php hasn't done it already ─
+// ── Session cookie path only set if response.php hasn't done it already ─
 // (response.php is always included first, so this is a safety net)
 if (session_status() === PHP_SESSION_NONE) {
     $isHttps = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off')

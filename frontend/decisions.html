@@ -3,10 +3,10 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta name="description" content="DecisionLog — Track decisions, detect patterns, and improve judgment with AI coaching.">
+  <meta name="description" content="DecisionLog Track decisions, detect patterns, and improve judgment with AI coaching.">
   <title>DecisionLog · FlowStack</title>
   <link rel="stylesheet" href="assets/css/app.css">
-  <link rel="stylesheet" href="assets/css/style.css">
+  <link rel="stylesheet" href="assets/css/style.css?v=3">
   <style>
     @keyframes fadeInUp  { from{opacity:0;transform:translateY(12px)} to{opacity:1;transform:translateY(0)} }
     @keyframes slideInTop{ from{opacity:0;transform:translateY(-14px)} to{opacity:1;transform:translateY(0)} }
@@ -47,15 +47,15 @@
 
     /* AI card */
     .ai-insight-card {
-      position:relative; background:rgba(139,92,246,0.06);
-      border:1px solid rgba(139,92,246,0.2); border-left:4px solid var(--p);
+      position:relative; background:var(--surface2);
+      border:1px solid var(--border-glow); border-left:4px solid var(--p);
       border-radius:16px; padding:20px 22px; margin-bottom:22px;
       animation:fadeInUp .35s ease;
     }
     .ai-badge {
       position:absolute; top:14px; right:14px;
-      background:rgba(139,92,246,0.18); color:var(--p);
-      border:1px solid rgba(139,92,246,0.3); border-radius:20px;
+      background:var(--p-light); color:var(--p);
+      border:1px solid var(--border-glow); border-radius:20px;
       padding:3px 10px; font-size:.72rem; font-weight:600;
     }
     .ai-structured { display:flex; flex-direction:column; gap:10px; margin-top:10px; }
@@ -129,16 +129,16 @@
       <div class="page-header">
         <div class="page-header-text">
           <h1>🧠 DecisionLog</h1>
-          <p>Record every decision — detect patterns, measure judgment quality, get AI coaching</p>
+          <p>Record every decision detect patterns, measure judgment quality, get AI coaching</p>
         </div>
       </div>
 
       <!-- Stats -->
       <div class="dec-stats">
-        <div class="dec-stat total"><span class="dec-stat-icon">📝</span><div class="dec-stat-val" id="s-total">—</div><div class="dec-stat-lbl">Total</div></div>
-        <div class="dec-stat good"><span class="dec-stat-icon">✅</span><div class="dec-stat-val" id="s-good" style="color:var(--success)">—</div><div class="dec-stat-lbl">Good</div></div>
-        <div class="dec-stat bad"><span class="dec-stat-icon">❌</span><div class="dec-stat-val" id="s-bad" style="color:var(--danger)">—</div><div class="dec-stat-lbl">Bad</div></div>
-        <div class="dec-stat neutral"><span class="dec-stat-icon">⚪</span><div class="dec-stat-val" id="s-neutral">—</div><div class="dec-stat-lbl">Neutral</div></div>
+        <div class="dec-stat total"><span class="dec-stat-icon">📝</span><div class="dec-stat-val" id="s-total"></div><div class="dec-stat-lbl">Total</div></div>
+        <div class="dec-stat good"><span class="dec-stat-icon">✅</span><div class="dec-stat-val" id="s-good" style="color:var(--success)"></div><div class="dec-stat-lbl">Good</div></div>
+        <div class="dec-stat bad"><span class="dec-stat-icon">❌</span><div class="dec-stat-val" id="s-bad" style="color:var(--danger)"></div><div class="dec-stat-lbl">Bad</div></div>
+        <div class="dec-stat neutral"><span class="dec-stat-icon">⚪</span><div class="dec-stat-val" id="s-neutral"></div><div class="dec-stat-lbl">Neutral</div></div>
       </div>
 
       <!-- Win-rate ring (5+) -->
@@ -156,8 +156,8 @@
           </svg>
           <div style="flex:1;min-width:160px">
             <div class="winrate-title">Decision Win Rate</div>
-            <div class="winrate-val" id="wr-val">—</div>
-            <div class="winrate-tier" id="wr-tier">—</div>
+            <div class="winrate-val" id="wr-val"></div>
+            <div class="winrate-tier" id="wr-tier"></div>
             <div class="outcome-rows" id="outcome-rows"></div>
           </div>
         </div>
@@ -179,15 +179,15 @@
           <div class="form-group">
             <label for="decision-text">What decision did you make?</label>
             <textarea id="decision-text" class="form-control" rows="3"
-              placeholder="Be specific — more detail = better pattern detection over time…" required></textarea>
+              placeholder="Be specific more detail = better pattern detection over time…" required></textarea>
           </div>
           <div class="log-form-row">
             <div class="form-group">
               <label for="outcome">Outcome</label>
               <select id="outcome" class="form-control">
-                <option value="good">✅ Good — I'd make it again</option>
-                <option value="neutral" selected>⚪ Neutral — unclear yet</option>
-                <option value="bad">❌ Bad — I'd do differently</option>
+                <option value="good">✅ Good I'd make it again</option>
+                <option value="neutral" selected>⚪ Neutral unclear yet</option>
+                <option value="bad">❌ Bad I'd do differently</option>
               </select>
             </div>
             <div class="form-group">

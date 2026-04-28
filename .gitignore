@@ -6,7 +6,7 @@ Thumbs.db
 .idea/
 .vscode/
 
-# ── Secrets — NEVER commit API keys ─────────────────────────────
+# ── Secrets NEVER commit API keys ─────────────────────────────
 backend/config/secrets.php
 
 # ── Node (if used for tooling) ───────────────────────────────────

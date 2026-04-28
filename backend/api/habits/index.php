@@ -1,6 +1,6 @@
 <?php
 /**
- * FlowStack — Habits API
+ * FlowStack Habits API
  * GET  → list habits
  * POST → add { name }
  * POST ?complete=1 → mark done { habit_id }

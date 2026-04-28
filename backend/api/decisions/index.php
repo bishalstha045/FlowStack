@@ -1,6 +1,6 @@
 <?php
 /**
- * FlowStack — Decisions CRUD
+ * FlowStack Decisions CRUD
  * GET  → paginated list + stats
  * POST → add { decision_text, outcome }
  * POST ?delete=1 → delete { decision_id }
@@ -21,7 +21,7 @@ try {
         $r = $pdo->prepare('SELECT COUNT(*) FROM decisions WHERE user_id=?');
         $r->execute([$uid]); $count = (int)$r->fetchColumn();
 
-        $stmt = $pdo->prepare('SELECT id, decision_text, outcome, created_at FROM decisions WHERE user_id=? ORDER BY created_at DESC LIMIT ? OFFSET ?');
+        $stmt = $pdo->prepare("SELECT id, decision_text, outcome, IF(created_at = '0000-00-00 00:00:00', CURRENT_TIMESTAMP, created_at) as created_at FROM decisions WHERE user_id=? ORDER BY id DESC LIMIT ? OFFSET ?");
         $stmt->execute([$uid, $limit, $off]);
 
         $r = $pdo->prepare("SELECT outcome, COUNT(*) c FROM decisions WHERE user_id=? GROUP BY outcome");
@@ -52,7 +52,7 @@ try {
     if (strlen($text) < 5) jsonError('Decision needs at least 5 characters.');
     if (!in_array($outcome, ['good','bad','neutral'])) $outcome = 'neutral';
 
-    $ins = $pdo->prepare('INSERT INTO decisions (user_id, decision_text, outcome) VALUES (?,?,?)');
+    $ins = $pdo->prepare('INSERT INTO decisions (user_id, decision_text, outcome, created_at) VALUES (?,?,?,NOW())');
     $ins->execute([$uid, $text, $outcome]);
     jsonOk(['id' => (int)$pdo->lastInsertId()], 201);
 

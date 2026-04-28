@@ -3,10 +3,10 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta name="description" content="Focus Tracker — Deep work sessions with Pomodoro timer, flow-state detection, and AI productivity insights.">
+  <meta name="description" content="Focus Tracker Deep work sessions with Pomodoro timer, flow-state detection, and AI productivity insights.">
   <title>Focus Tracker · FlowStack</title>
   <link rel="stylesheet" href="assets/css/app.css">
-  <link rel="stylesheet" href="assets/css/style.css">
+  <link rel="stylesheet" href="assets/css/style.css?v=3">
   <style>
     @keyframes fadeInUp { from{opacity:0;transform:translateY(12px)} to{opacity:1;transform:translateY(0)} }
     @keyframes breathe  { 0%,100%{box-shadow:0 0 0 0 rgba(139,92,246,0.15)} 50%{box-shadow:0 0 0 18px rgba(139,92,246,0)} }
@@ -70,15 +70,15 @@
 
     /* ── AI Insight card ───────────────────────── */
     .ai-insight-card {
-      position:relative; background:rgba(139,92,246,0.06);
-      border:1px solid rgba(139,92,246,0.2); border-left:4px solid var(--p);
+      position:relative; background:var(--surface2);
+      border:1px solid var(--border-glow); border-left:4px solid var(--p);
       border-radius:16px; padding:20px 22px; margin-bottom:22px;
       animation:fadeInUp .35s ease;
     }
     .ai-badge {
       position:absolute; top:14px; right:14px;
-      background:rgba(139,92,246,0.18); color:var(--p);
-      border:1px solid rgba(139,92,246,0.3); border-radius:20px;
+      background:var(--p-light); color:var(--p);
+      border:1px solid var(--border-glow); border-radius:20px;
       padding:3px 10px; font-size:.72rem; font-weight:600;
     }
     .ai-insight-text { color:var(--tx2); font-size:.88rem; line-height:1.8; margin-top:8px; white-space:pre-line; }
@@ -192,7 +192,7 @@
           <button class="btn btn-ghost btn-lg" id="btn-pause" onclick="pauseTimer()" style="display:none">⏸ Pause</button>
           <button class="btn btn-danger btn-lg" id="btn-discard" onclick="discardTimer()" style="display:none">✕ Discard</button>
         </div>
-        <div class="timer-status" id="timer-status">Ready — pick a session type and hit Start</div>
+        <div class="timer-status" id="timer-status">Ready pick a session type and hit Start</div>
       </div>
 
       <!-- Sessions -->
@@ -266,7 +266,7 @@
     document.getElementById('btn-pause').style.display   = 'inline-flex';
     document.getElementById('btn-save').style.display    = 'inline-flex';
     document.getElementById('btn-discard').style.display = 'inline-flex';
-    status.textContent = '🎯 In the zone — stay focused!';
+    status.textContent = '🎯 In the zone stay focused!';
     status.classList.add('active');
     document.getElementById('timer-label').textContent = currentPreset === 25 ? '🍅 POMODORO' :
       currentPreset === 45 ? '💪 DEEP WORK' : currentPreset === 90 ? '🧠 FLOW STATE' : '⚡ FOCUS SESSION';
@@ -277,11 +277,11 @@
       display.textContent = fmt(remaining);
       setRingProgress(elapsed / targetSecs);
 
-      if (elapsed === 300)  phase.textContent = '5 min done — distractions should be fading.';
-      if (elapsed === 900)  phase.textContent = '15 min — entering flow state territory. 🌊';
+      if (elapsed === 300)  phase.textContent = '5 min done distractions should be fading.';
+      if (elapsed === 900)  phase.textContent = '15 min entering flow state territory. 🌊';
       if (elapsed === 1500) phase.textContent = '🍅 25 min Pomodoro complete! Keep going or save.';
-      if (elapsed === 2700) phase.textContent = '45 min — deep work achieved! 💪';
-      if (elapsed === 5400) phase.textContent = '90 min — elite flow state! Save and rest. 🧠';
+      if (elapsed === 2700) phase.textContent = '45 min deep work achieved! 💪';
+      if (elapsed === 5400) phase.textContent = '90 min elite flow state! Save and rest. 🧠';
 
       if (remaining === 0) {
         clearInterval(interval);
@@ -302,7 +302,7 @@
       clearInterval(interval);
       paused = true;
       document.getElementById('btn-pause').textContent = '▶ Resume';
-      status.textContent = '⏸ Paused — click Resume to continue';
+      status.textContent = '⏸ Paused click Resume to continue';
     } else {
       paused = false;
       document.getElementById('btn-pause').textContent = '⏸ Pause';
@@ -335,7 +335,7 @@
       loadStats();
     } else FS.toast(res.data.error || 'Save failed', 'danger');
     elapsed = 0; display.textContent = fmt(targetSecs); setRingProgress(0);
-    status.textContent = 'Ready — pick a session type and hit Start';
+    status.textContent = 'Ready pick a session type and hit Start';
     phase.textContent = 'Choose a duration and start your session';
   };
 
@@ -347,7 +347,7 @@
     document.getElementById('btn-discard').style.display = 'none';
     document.getElementById('btn-start').style.display   = 'inline-flex';
     display.textContent = fmt(targetSecs); setRingProgress(0);
-    status.textContent = 'Ready — pick a session type and hit Start';
+    status.textContent = 'Ready pick a session type and hit Start';
     status.classList.remove('active');
     phase.textContent = 'Choose a duration and start your session';
     FS.toast('Session discarded.', 'danger');

@@ -1,6 +1,6 @@
 <?php
 /**
- * FlowStack — Auth: Register
+ * FlowStack Auth: Register
  * POST /backend/auth/register.php  { name, email, password, password_confirm }
  */
 require_once __DIR__ . '/../helpers/response.php';

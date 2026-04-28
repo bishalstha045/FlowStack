@@ -1,4 +1,4 @@
-# FlowStack — Apache Config
+# FlowStack Apache Config
 # Disable directory listing site-wide
 
 Options -Indexes
@@ -6,10 +6,10 @@ Options -Indexes
 # Default entry point
 DirectoryIndex index.html index.php
 
-# URL rewriting — works on both localhost subdirectory AND domain root
+# URL rewriting works on both localhost subdirectory AND domain root
 <IfModule mod_rewrite.c>
     RewriteEngine On
-    # Do NOT hardcode RewriteBase — Apache resolves it automatically
+    # Do NOT hardcode RewriteBase Apache resolves it automatically
 
     # If file exists, serve it directly
     RewriteCond %{REQUEST_FILENAME} -f [OR]

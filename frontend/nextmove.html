@@ -3,10 +3,10 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta name="description" content="Next Move — AI recommends what to focus on RIGHT NOW based on all your FlowStack data.">
+  <meta name="description" content="Next Move AI recommends what to focus on RIGHT NOW based on all your FlowStack data.">
   <title>Next Move · FlowStack</title>
   <link rel="stylesheet" href="assets/css/app.css">
-  <link rel="stylesheet" href="assets/css/style.css">
+  <link rel="stylesheet" href="assets/css/style.css?v=3">
   <style>
     @keyframes fadeInUp {
       from { opacity: 0; transform: translateY(14px); }
@@ -182,7 +182,7 @@
 
       <!-- AI Recommendations section -->
       <div class="ai-recs-header">
-        <div class="ai-recs-title">🎯 Your AI Recommendations — Right Now</div>
+        <div class="ai-recs-title">🎯 Your AI Recommendations Right Now</div>
         <span class="ai-badge">✨ Gemini AI</span>
       </div>
       <div id="ai-recommendations">
@@ -343,10 +343,26 @@ window.generateRecommendations = async function() {
       </div>`;
     }).join('')}</div>`;
   } else {
-    container.innerHTML = `<div class="ai-error-bar">
-      <span>⚠️ Could not load recommendations — check your connection.</span>
-      <button class="btn btn-sm btn-secondary" onclick="generateRecommendations()">Retry</button>
-    </div>`;
+    if (aiRes.status === 429 || (aiRes.data && aiRes.data._error === 'rate_limited')) {
+      let secs = 62;
+      container.innerHTML = `<div class="ai-error-bar" style="background:rgba(245,158,11,0.1);border-color:rgba(245,158,11,0.3)">
+        <span>⏳ Gemini is at capacity. <strong>Auto-retrying in <span id="nm-top-cd">${secs}</span>s</strong></span>
+      </div>`;
+      const cd = setInterval(() => {
+        secs--;
+        const el = document.getElementById('nm-top-cd');
+        if (el) el.textContent = secs;
+        if (secs <= 0) {
+          clearInterval(cd);
+          generateRecommendations();
+        }
+      }, 1000);
+    } else {
+      container.innerHTML = `<div class="ai-error-bar">
+        <span>⚠️ Could not load recommendations check your connection.</span>
+        <button class="btn btn-sm btn-secondary" onclick="generateRecommendations()">Retry</button>
+      </div>`;
+    }
   }
 
   if (btn) btn.disabled = false;
@@ -433,11 +449,11 @@ window.generateRecommendations = async function() {
       else if (t.match(/\b(relationship|friend|family|partner)\b/)) cluster = 'Relationships';
       else if (t.match(/\b(habit|routine|streak|consistency)\b/)) cluster = 'Habit Building';
     } else {
-      // Gemini unavailable — show retry countdown instead of fake generic steps
+      // Gemini unavailable show retry countdown instead of fake generic steps
       btn.disabled = false;
       btn.innerHTML = '<span id="submit-icon">🧭</span> Get My Action Plan';
       let secs = 62;
-      errEl.innerHTML = `⏳ Gemini is at capacity. <strong>Auto-retrying in <span id="nm-cd">${secs}</span>s — sit tight!</strong>`;
+      errEl.innerHTML = `⏳ Gemini is at capacity. <strong>Auto-retrying in <span id="nm-cd">${secs}</span>s sit tight!</strong>`;
       errEl.style.display = 'flex';
       btn.disabled = true;
       const cd = setInterval(() => {

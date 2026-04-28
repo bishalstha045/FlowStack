@@ -3,10 +3,10 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta name="description" content="HabitSync — Intelligent habit tracking with streaks, AI insights, and consistency analysis.">
+  <meta name="description" content="HabitSync Intelligent habit tracking with streaks, AI insights, and consistency analysis.">
   <title>HabitSync · FlowStack</title>
   <link rel="stylesheet" href="assets/css/app.css">
-  <link rel="stylesheet" href="assets/css/style.css">
+  <link rel="stylesheet" href="assets/css/style.css?v=3">
   <style>
     /* ── Animations ─────────────────────────────── */
     @keyframes fadeInUp  { from{opacity:0;transform:translateY(12px)} to{opacity:1;transform:translateY(0)} }
@@ -37,15 +37,15 @@
 
     /* ── AI Insight card ───────────────────────── */
     .ai-insight-card {
-      position:relative; background:rgba(139,92,246,0.06);
-      border:1px solid rgba(139,92,246,0.2); border-left:4px solid var(--p);
+      position:relative; background:var(--surface2);
+      border:1px solid var(--border-glow); border-left:4px solid var(--p);
       border-radius:16px; padding:20px 22px; margin-bottom:22px;
       animation:fadeInUp .35s ease;
     }
     .ai-badge {
       position:absolute; top:14px; right:14px;
-      background:rgba(139,92,246,0.18); color:var(--p);
-      border:1px solid rgba(139,92,246,0.3); border-radius:20px;
+      background:var(--p-light); color:var(--p);
+      border:1px solid var(--border-glow); border-radius:20px;
       padding:3px 10px; font-size:.72rem; font-weight:600; letter-spacing:.04em;
     }
     .ai-insight-text { color:var(--tx2); font-size:.88rem; line-height:1.8; margin-top:8px; white-space:pre-line; }
@@ -271,7 +271,7 @@
       cont.innerHTML = `<div class="empty-state">
         <div class="empty-icon">🔍</div>
         <h3>${allHabits.length ? 'No habits match your filter' : 'No habits yet'}</h3>
-        <p>${allHabits.length ? 'Try a different filter or search term.' : 'Add your first habit above. Start small — even "drink 8 glasses of water" counts.'}</p>
+        <p>${allHabits.length ? 'Try a different filter or search term.' : 'Add your first habit above. Start small even "drink 8 glasses of water" counts.'}</p>
       </div>`;
       return;
     }

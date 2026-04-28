@@ -1,6 +1,6 @@
 <?php
 /**
- * FlowStack — Dashboard Stats + XP Level System
+ * FlowStack Dashboard Stats + XP Level System
  * GET /backend/api/dashboard/index.php
  */
 require_once __DIR__ . '/../../helpers/response.php';

@@ -1,6 +1,6 @@
 <?php
 /**
- * FlowStack — NextMove
+ * FlowStack NextMove
  * GET  → history
  * POST → { situation_text } → rule-based advice
  */

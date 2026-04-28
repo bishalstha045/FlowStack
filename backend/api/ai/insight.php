@@ -1,6 +1,6 @@
 <?php
 /**
- * FlowStack — AI Insight API  (powered by Google Gemini)
+ * FlowStack AI Insight API  (powered by Google Gemini)
  * POST /backend/api/ai/insight.php
  *
  * Sends real user data to Gemini and returns a precise,
@@ -41,7 +41,7 @@ $pdo->exec("CREATE TABLE IF NOT EXISTS ai_insights_cache (
     KEY(user_id, module)
 )");
 
-// ── Cache check — skip when ?force=1 ─────────────────────────────────────────
+// ── Cache check skip when ?force=1 ─────────────────────────────────────────
 if (empty($_GET['force'])) {
     $stmt = $pdo->prepare(
         "SELECT insight_text FROM ai_insights_cache
@@ -60,7 +60,7 @@ if (empty($_GET['force'])) {
 $maxTokens = in_array($module, ['pathcompare', 'nextmove_advice', 'decisions']) ? 900 : 400;
 
 // ══════════════════════════════════════════════════════════════════════════════
-//  SYSTEM PROMPTS — define AI personality per module
+//  SYSTEM PROMPTS define AI personality per module
 // ══════════════════════════════════════════════════════════════════════════════
 
 // Base personality (all modules)
@@ -69,7 +69,7 @@ $system =
   . "Your job is to:\n"
   . "- Analyze user input and data deeply\n"
   . "- Give practical, realistic, and actionable advice\n"
-  . "- Avoid generic answers — always reference the actual data or situation provided\n"
+  . "- Avoid generic answers always reference the actual data or situation provided\n"
   . "- Be concise but insightful\n"
   . "- Structure your response clearly using the format specified in the user message\n\n"
   . "Tone: Smart but simple. Slightly analytical. No fluff, no unnecessary explanation.\n"
@@ -88,7 +88,7 @@ if ($module === 'nextmove_advice') {
         "You are a strategic planning assistant and empathetic coach inside FlowStack.\n"
       . "The user has described a real situation they are struggling with.\n"
       . "Your job: understand the situation, break it into logical next steps, suggest the most effective path forward.\n"
-      . "Be specific to their exact words — never give generic life advice.\n"
+      . "Be specific to their exact words never give generic life advice.\n"
       . "Tone: Direct, supportive, and practical. No fluff. No greetings or closings.";
 }
 if ($module === 'decisions') {
@@ -100,7 +100,7 @@ if ($module === 'decisions') {
 }
 
 // ══════════════════════════════════════════════════════════════════════════════
-//  USER PROMPTS — module-specific, data-driven, structured format
+//  USER PROMPTS module-specific, data-driven, structured format
 // ══════════════════════════════════════════════════════════════════════════════
 
 switch ($module) {
@@ -113,7 +113,7 @@ switch ($module) {
           . "Respond using this structure:\n"
           . "1. Summary: One sentence identifying the most important pattern in the actual numbers.\n"
           . "2. Key Insight: One specific observation referencing real data (streak, %, count).\n"
-          . "3. Recommended Action: One concrete thing they can do TODAY — name the exact habit.\n"
+          . "3. Recommended Action: One concrete thing they can do TODAY name the exact habit.\n"
           . "4. Risk: One risk if they continue the current pattern.\n"
           . "Keep each point to 1 sentence. No preamble.";
         break;
@@ -195,7 +195,7 @@ switch ($module) {
           . "Option A: {$optA}\n"
           . "Option B: {$optB}\n\n"
           . "Evaluate based on: Cognitive value, long-term ROI, skill building, and productivity.\n\n"
-          . "Return ONLY a valid JSON object — no markdown, no text outside JSON.\n"
+          . "Return ONLY a valid JSON object no markdown, no text outside JSON.\n"
           . "Use this exact structure:\n"
           . "{\n"
           . "  \"score_a\": <integer 0-100>,\n"
@@ -231,7 +231,7 @@ switch ($module) {
           . "Tone: Expert coach, no fluff, extremely tactical.";
         break;
 
-    // ── NextMove — auto recommendations from live data ────────────────────────
+    // ── NextMove auto recommendations from live data ────────────────────────
     case 'nextmove':
         $incomplete   = $data['incompleteHabits'] ?? [];
         $habitList    = is_array($incomplete) ? implode(', ', $incomplete) : (string)$incomplete;
@@ -262,7 +262,7 @@ switch ($module) {
           . "Reference actual values in every section. No preamble.";
         break;
 
-    // ── NextMove Advice — user describes situation ────────────────────────────
+    // ── NextMove Advice user describes situation ────────────────────────────
     case 'nextmove_advice':
         $situation = trim($data['situation'] ?? '');
         if (!$situation) jsonError('situation is required for nextmove_advice');
@@ -281,7 +281,7 @@ switch ($module) {
           . ($ctxStr ? "User's productivity context:\n{$ctxStr}\n\n" : "")
           . "Respond using this EXACT format:\n"
           . "1. Situation Summary: One sentence capturing what they are really dealing with.\n"
-          . "2. Immediate Next Step: The single most effective action they can take TODAY — be specific.\n"
+          . "2. Immediate Next Step: The single most effective action they can take TODAY be specific.\n"
           . "3. Step-by-Step Plan:\n"
           . "   Step A: Something they do today\n"
           . "   Step B: Something they do this week\n"
@@ -291,7 +291,7 @@ switch ($module) {
           . "CRITICAL RULES:\n"
           . "- Every point must directly reference words or themes from their situation.\n"
           . "- Do NOT write generic steps like 'set goals', 'stay motivated', or 'be consistent'.\n"
-          . "- Be honest — say hard truths clearly but kindly.\n"
+          . "- Be honest say hard truths clearly but kindly.\n"
           . "- No preamble, no closing remarks.";
         break;
 
@@ -362,10 +362,11 @@ if ($apiKey) {
         }
     }
 
-    // Rate limited — return immediately so frontend can show countdown + retry
+    // Rate limited - return fallback but DO NOT cache it
     if ($httpCode === 429) {
-        error_log("FlowStack/Gemini: 429 rate limit for module '{$module}'");
-        jsonError('rate_limited', 429);
+        error_log("FlowStack/Gemini: 429 rate limit for module '{$module}' - using fallback");
+        $insight = generateFallback($module, $data);
+        jsonOk(['insight' => $insight, 'cached' => false, 'source' => 'fallback_ratelimit']);
     }
 
     // Other error
@@ -373,13 +374,16 @@ if ($apiKey) {
 }
 
 // ══════════════════════════════════════════════════════════════════════════════
-//  RULE-BASED FALLBACK — only when GEMINI_API_KEY is empty
+//  RULE-BASED FALLBACK only when GEMINI_API_KEY is empty or API fails entirely
 // ══════════════════════════════════════════════════════════════════════════════
 
 $insight = generateFallback($module, $data);
 
-$pdo->prepare("INSERT INTO ai_insights_cache (user_id, module, insight_text) VALUES (?, ?, ?)")
-    ->execute([$uid, $module, $insight]);
+// Only cache if the API key is empty (meaning we are purely offline)
+if (!$apiKey) {
+    $pdo->prepare("INSERT INTO ai_insights_cache (user_id, module, insight_text) VALUES (?, ?, ?)")
+        ->execute([$uid, $module, $insight]);
+}
 
 jsonOk(['insight' => $insight, 'cached' => false, 'source' => 'fallback']);
 
@@ -394,10 +398,10 @@ function generateFallback(string $module, array $data): string
             $total  = (int)($data['total']            ?? 0);
             $pct    = (int)($data['avgConsistency']   ?? 0);
             $streak = (int)($data['maxStreak']        ?? 0);
-            if ($total === 0) return "1. Summary: No habits tracked yet.\n2. Key Insight: Starting with one small habit builds the logging habit itself.\n3. Recommended Action: Add your first habit — even 'drink 8 glasses of water' counts.\n4. Risk: Without tracking, you can't identify what's holding you back.";
-            if ($done === $total) return "1. Summary: All {$total} habits completed today — {$pct}% overall consistency with a {$streak}-day streak.\n2. Key Insight: Perfect execution today.\n3. Recommended Action: Pre-plan tomorrow's habits tonight while motivation is high.\n4. Risk: Complacency after good days is the most common streak-killer.";
+            if ($total === 0) return "1. Summary: No habits tracked yet.\n2. Key Insight: Starting with one small habit builds the logging habit itself.\n3. Recommended Action: Add your first habit even 'drink 8 glasses of water' counts.\n4. Risk: Without tracking, you can't identify what's holding you back.";
+            if ($done === $total) return "1. Summary: All {$total} habits completed today {$pct}% overall consistency with a {$streak}-day streak.\n2. Key Insight: Perfect execution today.\n3. Recommended Action: Pre-plan tomorrow's habits tonight while motivation is high.\n4. Risk: Complacency after good days is the most common streak-killer.";
             $left = $total - $done;
-            return "1. Summary: {$done}/{$total} habits done today ({$pct}% consistency).\n2. Key Insight: {$left} habit(s) still remaining — your streak depends on completing them.\n3. Recommended Action: Start with whichever remaining habit takes under 2 minutes.\n4. Risk: Leaving habits incomplete today will reset your momentum streak.";
+            return "1. Summary: {$done}/{$total} habits done today ({$pct}% consistency).\n2. Key Insight: {$left} habit(s) still remaining your streak depends on completing them.\n3. Recommended Action: Start with whichever remaining habit takes under 2 minutes.\n4. Risk: Leaving habits incomplete today will reset your momentum streak.";
         }
 
         case 'focus': {
@@ -405,9 +409,9 @@ function generateFallback(string $module, array $data): string
             $avg   = (int)($data['avgMins']   ?? 0);
             $week  = $data['weekHrs']          ?? 0;
             $trend = $data['trend']            ?? 'stable';
-            if ($today === 0) return "1. Summary: 0 focus minutes logged today.\n2. Key Insight: Breaking inertia requires just one 25-minute session.\n3. Recommended Action: Start a Pomodoro right now — set a timer for 25 minutes.\n4. Risk: Days without focus sessions compound into weeks of low output.";
+            if ($today === 0) return "1. Summary: 0 focus minutes logged today.\n2. Key Insight: Breaking inertia requires just one 25-minute session.\n3. Recommended Action: Start a Pomodoro right now set a timer for 25 minutes.\n4. Risk: Days without focus sessions compound into weeks of low output.";
             $vs = $today > $avg ? "above your {$avg}-min average" : "below your {$avg}-min average";
-            return "1. Summary: {$today} min focused today — {$vs}.\n2. Key Insight: Weekly total is {$week} hrs with a {$trend} trend.\n3. Recommended Action: Schedule your next focus block before you close this tab.\n4. Risk: Inconsistent focus sessions prevent deep work from becoming a habit.";
+            return "1. Summary: {$today} min focused today {$vs}.\n2. Key Insight: Weekly total is {$week} hrs with a {$trend} trend.\n3. Recommended Action: Schedule your next focus block before you close this tab.\n4. Risk: Inconsistent focus sessions prevent deep work from becoming a habit.";
         }
 
         case 'decisions': {
@@ -415,7 +419,7 @@ function generateFallback(string $module, array $data): string
             $winRate = (int)($data['winRate'] ?? 0);
             $bad     = (int)($data['bad']     ?? 0);
             if ($total < 2) return "1. Decision Summary: Not enough data yet.\n2. Pros: You started logging.\n3. Cons: Need at least 2 decisions to see patterns.\n4. Long-term Impact: Without logging, decision mistakes repeat invisibly.\n5. Final Suggestion: Log your next 3 decisions this week, however small.";
-            return "1. Decision Summary: {$winRate}% win rate across {$total} decisions.\n2. Pros: " . ($winRate >= 60 ? "Solid win rate — your judgment is above average." : "You're actively logging and building self-awareness.") . "\n3. Cons: " . ($bad > 0 ? "{$bad} poor outcome(s) need review." : "No major bad outcomes logged.") . "\n4. Long-term Impact: " . ($winRate < 50 ? "Below 50% win rate compounds into poor outcomes." : "Strong judgment compounds into better opportunities.") . "\n5. Final Suggestion: " . ($bad > 0 ? "Review your {$bad} poor outcome(s) for a common root cause." : "Keep logging — consistency reveals patterns invisible in the moment.");
+            return "1. Decision Summary: {$winRate}% win rate across {$total} decisions.\n2. Pros: " . ($winRate >= 60 ? "Solid win rate your judgment is above average." : "You're actively logging and building self-awareness.") . "\n3. Cons: " . ($bad > 0 ? "{$bad} poor outcome(s) need review." : "No major bad outcomes logged.") . "\n4. Long-term Impact: " . ($winRate < 50 ? "Below 50% win rate compounds into poor outcomes." : "Strong judgment compounds into better opportunities.") . "\n5. Final Suggestion: " . ($bad > 0 ? "Review your {$bad} poor outcome(s) for a common root cause." : "Keep logging consistency reveals patterns invisible in the moment.");
         }
 
         case 'skills': {
@@ -423,7 +427,7 @@ function generateFallback(string $module, array $data): string
             $total  = (int)($data['total']  ?? 0);
             $expert = (int)($data['expert'] ?? 0);
             if ($total === 0) return "1. Summary: No skills tracked yet.\n2. Key Insight: Tracking skills makes gaps visible and progress measurable.\n3. Recommended Action: Add your first skill and rate your current level honestly.\n4. Risk: Without tracking, skill development stays vague and inconsistent.";
-            return "1. Summary: {$total} skills tracked at {$avg}/10 average ({$expert} expert-level).\n2. Key Insight: " . ($avg < 6 ? "Most skills are below intermediate — there's significant growth potential." : "Strong skill base — focus on pushing top skills toward mastery.") . "\n3. Recommended Action: " . ($avg < 6 ? "Spend 20 min/day on the skill closest to level 7." : "Push your strongest skill toward 9-10 — that's where unique value is created.") . "\n4. Risk: Spreading effort across too many skills prevents mastery in any.";
+            return "1. Summary: {$total} skills tracked at {$avg}/10 average ({$expert} expert-level).\n2. Key Insight: " . ($avg < 6 ? "Most skills are below intermediate there's significant growth potential." : "Strong skill base focus on pushing top skills toward mastery.") . "\n3. Recommended Action: " . ($avg < 6 ? "Spend 20 min/day on the skill closest to level 7." : "Push your strongest skill toward 9-10 that's where unique value is created.") . "\n4. Risk: Spreading effort across too many skills prevents mastery in any.";
         }
 
         case 'dashboard': {
@@ -431,11 +435,78 @@ function generateFallback(string $module, array $data): string
             $stats  = $data['dashStats'] ?? [];
             $habits = (int)($stats['active_habits'] ?? 0);
             $hrs    = $stats['focus_hours'] ?? 0;
-            return "1. Summary: FlowScore {$score}/100 — {$habits} active habits, {$hrs} focus hours this week.\n2. Key Insight: " . ($score < 50 ? "Score below 50 — habits and focus are the primary drag." : "Good momentum — one module is pulling the score down.") . "\n3. Recommended Action: " . ($score < 50 ? "Complete all habits today — it's your highest-leverage action." : "Target your lowest-scoring module specifically.") . "\n4. Risk: Ignoring the weakest module means overall score plateaus.";
+            return "1. Summary: FlowScore {$score}/100 {$habits} active habits, {$hrs} focus hours this week.\n2. Key Insight: " . ($score < 50 ? "Score below 50 habits and focus are the primary drag." : "Good momentum one module is pulling the score down.") . "\n3. Recommended Action: " . ($score < 50 ? "Complete all habits today it's your highest-leverage action." : "Target your lowest-scoring module specifically.") . "\n4. Risk: Ignoring the weakest module means overall score plateaus.";
         }
 
         case 'pathcompare': {
-            return json_encode(['_error' => 'no_api_key']);
+            $optA = strtolower(trim($data['option_a'] ?? 'Option A'));
+            $optB = strtolower(trim($data['option_b'] ?? 'Option B'));
+
+            // ── Keyword scoring engine ──────────────────────────────
+            // High-value: cognitive growth, learning, health
+            $highValue = ['study', 'studying', 'studing', 'studi', 'learn', 'learning', 'read', 'reading',
+                          'code', 'coding', 'program', 'programming', 'work', 'working',
+                          'exercise', 'gym', 'workout', 'run', 'running', 'meditat',
+                          'chess', 'write', 'writing', 'practice', 'skill', 'course',
+                          'book', 'research', 'review', 'plan', 'build', 'create', 'school', 'college'];
+
+            // Low-value: passive entertainment, instant gratification
+            $lowValue  = ['play', 'playing', 'game', 'gaming', 'games', 'free fire', 'freefire',
+                          'pubg', 'fortnite', 'mobile legends', 'valorant', 'scroll',
+                          'scrolling', 'tiktok', 'instagram', 'facebook', 'netflix',
+                          'watch', 'watching', 'youtube', 'sleep', 'nap', 'party',
+                          'chill', 'chilling', 'idle', 'browse', 'browsing', 'hang',
+                          'video game', 'video games', 'movie'];
+
+            function scoreOption(string $opt, array $high, array $low): int {
+                $score = 50; // neutral baseline
+                $lowerOpt = strtolower($opt);
+                
+                // Keyword matching
+                foreach ($high as $kw) {
+                    if (str_contains($lowerOpt, $kw)) { $score += 25; break; }
+                }
+                foreach ($low as $kw) {
+                    if (str_contains($lowerOpt, $kw)) { $score -= 28; break; }
+                }
+
+                // Add pseudo-random "AI feel" jitter based on the string itself (-5 to +8 points)
+                $jitter = (crc32($lowerOpt) % 14) - 5; 
+                $score += $jitter;
+
+                return max(12, min(98, $score));
+            }
+
+            $scoreA = scoreOption($optA, $highValue, $lowValue);
+            $scoreB = scoreOption($optB, $highValue, $lowValue);
+            $winner = $scoreA >= $scoreB ? 'A' : 'B';
+            $winScore   = $winner === 'A' ? $scoreA : $scoreB;
+            $loseScore  = $winner === 'A' ? $scoreB : $scoreA;
+            $winOpt     = $winner === 'A' ? $data['option_a'] : $data['option_b'];
+            $loseOpt    = $winner === 'A' ? $data['option_b'] : $data['option_a'];
+
+            $buildPros = fn(int $s) => $s >= 60
+                ? "• High cognitive or physical value\n• Strong long-term ROI and skill building"
+                : "• Short-term enjoyment\n• Can be useful as a brief reward";
+
+            $buildCons = fn(int $s) => $s >= 60
+                ? "• Requires discipline and effort"
+                : "• Low long-term value\n• Can harm focus and productivity if overused";
+
+            return json_encode([
+                'score_a'   => $scoreA,
+                'score_b'   => $scoreB,
+                'selected'  => $winner,
+                'pros_a'    => $buildPros($scoreA),
+                'cons_a'    => $buildCons($scoreA),
+                'pros_b'    => $buildPros($scoreB),
+                'cons_b'    => $buildCons($scoreB),
+                'reasoning' => "Best Choice: Option {$winner} — \"{$winOpt}\" scores {$winScore} vs {$loseScore}. "
+                             . ($winScore >= 60
+                                ? "This activity builds real-world skills and compounds over time."
+                                : "Both options have low productivity value — choose the lesser distraction.")
+                             . " (Note: Gemini AI is offline — rule-based evaluation active.)"
+            ]);
         }
 
         case 'skill_roadmap': {
@@ -455,14 +526,34 @@ function generateFallback(string $module, array $data): string
         }
 
         case 'nextmove_advice': {
-            $situation = $data['situation'] ?? 'your situation';
+            $situation = trim($data['situation'] ?? 'your situation');
+            $lower = strtolower($situation);
+            
+            if (preg_match('/\b(faang|google|meta|apple|amazon|netflix|job|interview|career)\b/', $lower)) {
+                $stepA = "List the top 3 technical skills required for this role.";
+                $stepB = "Schedule 1 hour of daily interview prep (Leetcode/System Design).";
+                $stepC = "Update your resume to highlight impact metrics.";
+            } elseif (preg_match('/\b(study|exam|test|learn|course)\b/', $lower)) {
+                $stepA = "Break the syllabus into manageable daily chunks.";
+                $stepB = "Use the Pomodoro technique to study without distractions.";
+                $stepC = "Test yourself on the material instead of just re-reading.";
+            } elseif (preg_match('/\b(money|finance|invest|debt)\b/', $lower)) {
+                $stepA = "Track every expense for the next 7 days.";
+                $stepB = "Identify and cut one recurring subscription you don't need.";
+                $stepC = "Set up an automatic transfer to savings on payday.";
+            } else {
+                $stepA = "Write down the absolute worst-case scenario and realize it's survivable.";
+                $stepB = "Identify the ONE smallest action you can take right now to move forward.";
+                $stepC = "Execute that small action today to break the paralysis.";
+            }
+
             return "1. Situation Summary: You're dealing with: \"{$situation}\".\n"
-                 . "2. Immediate Next Step: Write the core problem in one sentence right now to gain clarity.\n"
-                 . "3. Step-by-Step Plan:\n   Step A: Define the problem clearly today\n   Step B: List 3 possible actions this week\n   Step C: Pick one action and execute it within 30 days\n   Step D: Build a weekly review habit to track progress\n"
-                 . "4. Mistakes to Avoid: Overthinking without acting, and trying to solve everything at once.";
+                 . "2. Immediate Next Step: Stop overthinking. Your immediate goal is to break this down into execution.\n"
+                 . "3. Step-by-Step Plan:\n   Step A: {$stepA}\n   Step B: {$stepB}\n   Step C: {$stepC}\n   Step D: Review your progress at the end of the week.\n"
+                 . "4. Note: (Gemini AI is offline — rule-based evaluation active)";
         }
 
         default:
-            return "1. Summary: AI key not configured.\n2. Key Insight: Add your Gemini API key to backend/config/secrets.php.\n3. Recommended Action: Get a free key at aistudio.google.com.\n4. Risk: Without AI, insights are rule-based only.";
+            return "1. Summary: AI is temporarily unavailable.\n2. Key Insight: Your Gemini API key may be invalid or out of quota.\n3. Recommended Action: Verify your key in backend/config/secrets.php or check Google AI Studio.\n4. Risk: Without AI, insights are rule-based only.";
     }
 }

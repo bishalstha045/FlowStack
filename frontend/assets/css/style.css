@@ -1,7 +1,6 @@
 /* ============================================================
-   FlowStack — Intelligence UI Additions
-   Appended to app.css via separate file (style.css)
-   Insight cards, score gauges, FlowScore panel, module scores
+   FlowStack Intelligence UI Additions  (v3)
+   Aligned to the Slate/Indigo Design System
    ============================================================ */
 
 /* ── Insight Cards ──────────────────────────────────────────── */
@@ -19,64 +18,53 @@
 }
 
 @keyframes fadeSlide {
-  from {
-    opacity: 0;
-    transform: translateY(6px);
-  }
-
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
+  from { opacity: 0; transform: translateY(6px); }
+  to   { opacity: 1; transform: translateY(0); }
 }
 
-.insight-card:nth-child(1) {
-  animation-delay: .0s
-}
+.insight-card:nth-child(1) { animation-delay: .00s }
+.insight-card:nth-child(2) { animation-delay: .05s }
+.insight-card:nth-child(3) { animation-delay: .10s }
+.insight-card:nth-child(4) { animation-delay: .15s }
+.insight-card:nth-child(5) { animation-delay: .20s }
 
-.insight-card:nth-child(2) {
-  animation-delay: .05s
-}
-
-.insight-card:nth-child(3) {
-  animation-delay: .1s
-}
-
-.insight-card:nth-child(4) {
-  animation-delay: .15s
-}
-
-.insight-card:nth-child(5) {
-  animation-delay: .2s
-}
-
+/* Dark-mode variants */
 .insight-success {
-  background: #ECFDF5;
-  border-color: rgba(16, 185, 129, .25);
-  color: #064E3B;
+  background: rgba(52,211,153,0.08);
+  border-color: rgba(52,211,153,0.22);
+  color: #6EE7B7;
 }
-
 .insight-warn {
-  background: #FFFBEB;
-  border-color: rgba(245, 158, 11, .25);
-  color: #78350F;
+  background: rgba(251,191,36,0.08);
+  border-color: rgba(251,191,36,0.22);
+  color: #FCD34D;
 }
-
 .insight-danger {
-  background: #FEF2F2;
-  border-color: rgba(239, 68, 68, .25);
-  color: #7F1D1D;
+  background: rgba(248,113,113,0.08);
+  border-color: rgba(248,113,113,0.22);
+  color: #FCA5A5;
 }
-
 .insight-info {
-  background: #EEF2FF;
-  border-color: rgba(99, 102, 241, .25);
-  color: #3730A3;
+  background: rgba(99,102,241,0.08);
+  border-color: rgba(99,102,241,0.22);
+  color: #A5B4FC;
 }
 
-.insight-text {
-  flex: 1;
+/* Light-mode overrides */
+html[data-theme="light"] .insight-success {
+  background: #ECFDF5; border-color: rgba(5,150,105,.2);  color: #064E3B;
 }
+html[data-theme="light"] .insight-warn {
+  background: #FFFBEB; border-color: rgba(217,119,6,.2);  color: #78350F;
+}
+html[data-theme="light"] .insight-danger {
+  background: #FEF2F2; border-color: rgba(220,38,38,.2);  color: #7F1D1D;
+}
+html[data-theme="light"] .insight-info {
+  background: #EEF2FF; border-color: rgba(79,70,229,.2);  color: #3730A3;
+}
+
+.insight-text { flex: 1; }
 
 .no-insights {
   font-size: .85rem;
@@ -86,9 +74,7 @@
 }
 
 /* ── Score Gauge ────────────────────────────────────────────── */
-.score-gauge {
-  text-align: center;
-}
+.score-gauge { text-align: center; }
 
 .gauge-tier {
   font-size: .78rem;
@@ -99,12 +85,13 @@
 
 /* ── Intelligence Panel ─────────────────────────────────────── */
 .intel-panel {
-  background: var(--surface);
-  border: 1px solid var(--border);
+  background: var(--card-bg);
+  border: 1px solid var(--border-light);
   border-radius: var(--r3);
   padding: 18px 20px;
   box-shadow: var(--s1);
   margin-bottom: 16px;
+  backdrop-filter: blur(12px);
 }
 
 .intel-header {
@@ -130,33 +117,29 @@
   white-space: nowrap;
 }
 
-.badge-success {
-  background: #ECFDF5;
-  color: #065F46;
-}
+.badge-success { background: rgba(52,211,153,0.1); color: #34D399; }
+.badge-warn    { background: rgba(251,191,36,0.1);  color: #FBBF24; }
+.badge-danger  { background: rgba(248,113,113,0.1); color: #F87171; }
 
-.badge-warn {
-  background: #FFFBEB;
-  color: #92400E;
-}
-
-.badge-danger {
-  background: #FEF2F2;
-  color: #991B1B;
-}
+html[data-theme="light"] .badge-success { background:#ECFDF5; color:#065F46; }
+html[data-theme="light"] .badge-warn    { background:#FFFBEB; color:#92400E; }
+html[data-theme="light"] .badge-danger  { background:#FEF2F2; color:#991B1B; }
 
 /* ── FlowScore Panel ────────────────────────────────────────── */
 .flowscore-panel {
-  background: linear-gradient(135deg, #4F46E5 0%, #7C3AED 50%, #DB2777 100%);
+  background: linear-gradient(135deg, rgba(var(--p-raw), 0.04), rgba(var(--s-raw), 0.08)), var(--card-bg);
+  border: 1px solid rgba(var(--p-raw), 0.18);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
   border-radius: var(--r4);
-  padding: 30px 32px;
+  padding: 32px 36px;
   display: flex;
   gap: 28px;
   align-items: center;
   flex-wrap: wrap;
-  box-shadow: 0 12px 40px rgba(124, 58, 237, 0.4);
-  margin-bottom: 28px;
-  color: #fff;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.04), inset 0 1px 0 rgba(255, 255, 255, 0.2);
+  margin-bottom: 24px;
+  color: var(--tx);
   position: relative;
   overflow: hidden;
 }
@@ -164,26 +147,18 @@
 .flowscore-panel::before {
   content: '';
   position: absolute;
-  inset: 0;
-  background: radial-gradient(circle at top right, rgba(255, 255, 255, 0.25), transparent 60%);
+  top: 0; right: 0; bottom: 0; left: 0;
+  background: radial-gradient(circle at top right, rgba(var(--p-raw), 0.15), transparent 50%),
+              radial-gradient(circle at bottom left, rgba(var(--s-raw), 0.1), transparent 50%);
   pointer-events: none;
+  z-index: 0;
 }
 
-.flowscore-panel svg circle:nth-child(2) {
-  filter: drop-shadow(0 2px 4px rgba(255, 255, 255, .3));
-}
-
-.flowscore-left {
-  flex-shrink: 0;
-}
-
-.flowscore-right {
-  flex: 1;
-  min-width: 0;
-}
+.flowscore-left  { flex-shrink: 0; }
+.flowscore-right { flex: 1; min-width: 0; }
 
 .flowscore-tier {
-  font-size: 1.3rem;
+  font-size: 1.25rem;
   font-weight: 800;
   letter-spacing: -.3px;
   margin-bottom: 4px;
@@ -191,7 +166,7 @@
 
 .flowscore-summary {
   font-size: .875rem;
-  opacity: .88;
+  color: var(--tx2);
   line-height: 1.6;
   margin-bottom: 12px;
 }
@@ -203,18 +178,19 @@
 }
 
 .module-score {
-  background: rgba(255, 255, 255, .15);
-  border: 1px solid rgba(255, 255, 255, .2);
+  background: var(--surface2);
+  border: 1px solid var(--border);
   border-radius: var(--r2);
-  padding: 6px 12px;
+  padding: 5px 12px;
   font-size: .78rem;
-  backdrop-filter: blur(4px);
+  color: var(--tx3);
 }
 
 .module-score span {
   font-weight: 800;
-  font-size: 1rem;
+  font-size: .95rem;
   display: block;
+  color: var(--tx);
 }
 
 /* ── Habit feedback inline ──────────────────────────────────── */
@@ -225,23 +201,14 @@
   font-style: italic;
   line-height: 1.5;
 }
-
-.habit-feedback.fb-good {
-  color: var(--success);
-}
-
-.habit-feedback.fb-warn {
-  color: var(--warning);
-}
-
-.habit-feedback.fb-danger {
-  color: var(--danger);
-}
+.habit-feedback.fb-good   { color: var(--success); }
+.habit-feedback.fb-warn   { color: var(--warning); }
+.habit-feedback.fb-danger { color: var(--danger);  }
 
 /* ── Productivity score card ────────────────────────────────── */
 .prod-score-card {
-  background: var(--surface);
-  border: 1px solid var(--border);
+  background: var(--card-bg);
+  border: 1px solid var(--border-light);
   border-radius: var(--r3);
   padding: 20px;
   display: flex;
@@ -250,12 +217,10 @@
   flex-wrap: wrap;
   box-shadow: var(--s1);
   margin-bottom: 20px;
+  backdrop-filter: blur(12px);
 }
 
-.prod-score-right {
-  flex: 1;
-  min-width: 180px;
-}
+.prod-score-right { flex: 1; min-width: 180px; }
 
 .prod-score-title {
   font-size: .78rem;
@@ -266,18 +231,14 @@
 }
 
 .prod-score-val {
-  font-size: 2.5rem;
+  font-size: 2.4rem;
   font-weight: 800;
   color: var(--tx);
   letter-spacing: -1px;
   line-height: 1.1;
 }
 
-.prod-score-sub {
-  font-size: .8rem;
-  color: var(--tx3);
-  margin-top: 2px;
-}
+.prod-score-sub { font-size: .8rem; color: var(--tx3); margin-top: 2px; }
 
 .prod-metric-row {
   display: flex;
@@ -286,26 +247,14 @@
   margin-top: 12px;
 }
 
-.prod-metric {
-  text-align: center;
-}
-
-.prod-metric .val {
-  font-size: 1.1rem;
-  font-weight: 800;
-  color: var(--tx);
-}
-
-.prod-metric .lbl {
-  font-size: .7rem;
-  color: var(--tx3);
-  font-weight: 500;
-}
+.prod-metric { text-align: center; }
+.prod-metric .val { font-size: 1.1rem; font-weight: 800; color: var(--tx); }
+.prod-metric .lbl { font-size: .7rem; color: var(--tx3); font-weight: 500; }
 
 /* ── Win rate card ──────────────────────────────────────────── */
 .win-rate-card {
-  background: var(--surface);
-  border: 1px solid var(--border);
+  background: var(--card-bg);
+  border: 1px solid var(--border-light);
   border-radius: var(--r3);
   padding: 20px;
   display: flex;
@@ -314,19 +263,12 @@
   flex-wrap: wrap;
   box-shadow: var(--s1);
   margin-bottom: 20px;
+  backdrop-filter: blur(12px);
 }
 
-.win-rate-right {
-  flex: 1;
-  min-width: 180px;
-}
+.win-rate-right { flex: 1; min-width: 180px; }
 
-.outcome-bars {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-  margin-top: 8px;
-}
+.outcome-bars  { display: flex; flex-direction: column; gap: 6px; margin-top: 8px; }
 
 .outcome-row {
   display: flex;
@@ -335,12 +277,7 @@
   font-size: .8rem;
 }
 
-.outcome-label {
-  width: 56px;
-  flex-shrink: 0;
-  color: var(--tx2);
-  font-weight: 500;
-}
+.outcome-label { width: 56px; flex-shrink: 0; color: var(--tx2); font-weight: 500; }
 
 .outcome-bar {
   flex: 1;
@@ -350,27 +287,11 @@
   overflow: hidden;
 }
 
-.outcome-fill {
-  height: 100%;
-  border-radius: 99px;
-  transition: width .8s ease;
-}
-
-.outcome-count {
-  width: 24px;
-  text-align: right;
-  font-weight: 700;
-  color: var(--tx3);
-  font-size: .75rem;
-}
+.outcome-fill { height: 100%; border-radius: 99px; transition: width .8s ease; }
+.outcome-count { width: 24px; text-align: right; font-weight: 700; color: var(--tx3); font-size: .75rem; }
 
 /* ── Skill distribution ─────────────────────────────────────── */
-.skill-dist {
-  display: flex;
-  gap: 8px;
-  flex-wrap: wrap;
-  margin-bottom: 12px;
-}
+.skill-dist { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 12px; }
 
 .dist-pill {
   display: flex;
@@ -383,46 +304,15 @@
   border: 1px solid transparent;
 }
 
-.dist-success {
-  background: #ECFDF5;
-  border-color: rgba(16, 185, 129, .25);
-  color: #065F46;
-}
+.dist-success { background: rgba(52,211,153,0.1);  border-color: rgba(52,211,153,.2); color: #34D399; }
+.dist-warn    { background: rgba(251,191,36,0.1);   border-color: rgba(251,191,36,.2); color: #FBBF24; }
+.dist-danger  { background: rgba(248,113,113,0.1);  border-color: rgba(248,113,113,.2);color: #F87171; }
 
-.dist-warn {
-  background: #FFFBEB;
-  border-color: rgba(245, 158, 11, .25);
-  color: #78350F;
-}
-
-.dist-danger {
-  background: #FEF2F2;
-  border-color: rgba(239, 68, 68, .25);
-  color: #7F1D1D;
-}
+html[data-theme="light"] .dist-success { background:#ECFDF5; border-color:rgba(5,150,105,.25);  color:#065F46; }
+html[data-theme="light"] .dist-warn    { background:#FFFBEB; border-color:rgba(217,119,6,.25);  color:#78350F; }
+html[data-theme="light"] .dist-danger  { background:#FEF2F2; border-color:rgba(220,38,38,.25);  color:#7F1D1D; }
 
 /* ── Trend badge ────────────────────────────────────────────── */
-.trend-up {
-  color: var(--success);
-  font-weight: 700;
-  font-size: .8rem;
-}
-
-.trend-down {
-  color: var(--danger);
-  font-weight: 700;
-  font-size: .8rem;
-}
-
-.trend-flat {
-  color: var(--tx3);
-  font-weight: 600;
-  font-size: .8rem;
-}
-
-@media(max-width:768px) {
-  .flowscore-panel {
-    padding: 18px;
-    gap: 16px;
-  }
-}
+.trend-up   { color: var(--success); font-weight: 700; font-size: .8rem; }
+.trend-down { color: var(--danger);  font-weight: 700; font-size: .8rem; }
+.trend-flat { color: var(--tx3);     font-weight: 600; font-size: .8rem; }

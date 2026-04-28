@@ -1,6 +1,6 @@
 <?php
 /**
- * FlowStack — Focus Sessions
+ * FlowStack Focus Sessions
  * GET  → stats + recent sessions
  * POST → save session { duration_minutes }
  */

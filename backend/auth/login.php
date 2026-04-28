@@ -1,6 +1,6 @@
 <?php
 /**
- * FlowStack — Auth: Login
+ * FlowStack Auth: Login
  * POST /backend/auth/login.php  { email, password }
  */
 require_once __DIR__ . '/../helpers/response.php';
