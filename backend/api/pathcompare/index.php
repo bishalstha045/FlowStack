@@ -26,14 +26,14 @@ try {
     if ($_SERVER['REQUEST_METHOD'] === 'GET') {
         // Check if we're requesting a single comparison
         if (isset($_GET['id'])) {
-            $s = $pdo->prepare('SELECT id, option_a, option_b, selected_option, score_a, score_b, reasoning, pros_a, cons_a, pros_b, cons_b, created_at FROM path_compare WHERE id=? AND user_id=?');
+            $s = $pdo->prepare("SELECT id, option_a, option_b, selected_option, score_a, score_b, reasoning, pros_a, cons_a, pros_b, cons_b, IF(created_at = '0000-00-00 00:00:00', CURRENT_TIMESTAMP, created_at) as created_at FROM path_compare WHERE id=? AND user_id=?");
             $s->execute([(int)$_GET['id'], $uid]);
             $row = $s->fetch();
             if (!$row) jsonError('Not found', 404);
             jsonOk(['comparison' => $row]);
         }
 
-        $s = $pdo->prepare('SELECT id, option_a, option_b, selected_option, score_a, score_b, reasoning, created_at FROM path_compare WHERE user_id=? ORDER BY created_at DESC LIMIT 20');
+        $s = $pdo->prepare("SELECT id, option_a, option_b, selected_option, score_a, score_b, reasoning, IF(created_at = '0000-00-00 00:00:00', CURRENT_TIMESTAMP, created_at) as created_at FROM path_compare WHERE user_id=? ORDER BY id DESC LIMIT 20");
         $s->execute([$uid]);
         jsonOk(['history' => $s->fetchAll()]);
     }
@@ -55,7 +55,7 @@ try {
     $pros_b    = trim($body['pros_b'] ?? '');
     $cons_b    = trim($body['cons_b'] ?? '');
 
-    $pdo->prepare('INSERT INTO path_compare (user_id, option_a, option_b, selected_option, score_a, score_b, reasoning, pros_a, cons_a, pros_b, cons_b) VALUES (?,?,?,?,?,?,?,?,?,?,?)')
+    $pdo->prepare('INSERT INTO path_compare (user_id, option_a, option_b, selected_option, score_a, score_b, reasoning, pros_a, cons_a, pros_b, cons_b, created_at) VALUES (?,?,?,?,?,?,?,?,?,?,?,NOW())')
         ->execute([$uid, $a, $b, $selected, $score_a, $score_b, $reasoning, $pros_a, $cons_a, $pros_b, $cons_b]);
 
     jsonOk(['id' => (int)$pdo->lastInsertId(), 'selected' => $selected], 201);

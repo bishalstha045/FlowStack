@@ -22,7 +22,7 @@ try {
         $r = $pdo->prepare("SELECT COALESCE(AVG(duration_minutes),0) FROM focus_sessions WHERE user_id=?");
         $r->execute([$uid]); $avgMins   = (int)round($r->fetchColumn());
 
-        $r = $pdo->prepare("SELECT id, duration_minutes, session_date, time_of_day FROM focus_sessions WHERE user_id=? ORDER BY created_at DESC LIMIT 20");
+        $r = $pdo->prepare("SELECT id, duration_minutes, session_date, time_of_day, IF(created_at = '0000-00-00 00:00:00', CURRENT_TIMESTAMP, created_at) as created_at FROM focus_sessions WHERE user_id=? ORDER BY id DESC LIMIT 20");
         $r->execute([$uid]);
 
         jsonOk([
@@ -42,7 +42,7 @@ try {
     $hour = (int)date('H');
     $tod  = $hour < 12 ? 'morning' : ($hour < 17 ? 'afternoon' : ($hour < 21 ? 'evening' : 'night'));
 
-    $pdo->prepare('INSERT INTO focus_sessions (user_id, duration_minutes, session_date, time_of_day) VALUES (?,?,CURDATE(),?)')
+    $pdo->prepare('INSERT INTO focus_sessions (user_id, duration_minutes, session_date, time_of_day, created_at) VALUES (?,?,CURDATE(),?,NOW())')
         ->execute([$uid, $mins, $tod]);
 
     jsonOk(['duration_minutes' => $mins, 'time_of_day' => $tod], 201);

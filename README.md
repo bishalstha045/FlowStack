@@ -2,6 +2,8 @@
 
 > *Understand yourself first. Build better habits, make smarter decisions, and track your growth all in one place.*
 
+**🚀 Live Demo:** [flowstack.gt.tc](http://flowstack.gt.tc)
+
 FlowStack is a full-stack personal analytics web application that helps you log and visualize your daily behaviors. Instead of scattered notes and apps, FlowStack gives you a unified dashboard to track your habits, focus sessions, decisions, and skills and helps you identify patterns that lead to real improvement.
 
 ---
